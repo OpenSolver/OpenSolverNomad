@@ -9,8 +9,6 @@
 
 #include <xlcall.h>
 
-#include <framewrk.h>
-
 #include <stdio.h>
 
 #include <string>
@@ -135,6 +133,12 @@ long _stdcall NomadMain (bool SolveRelaxation)
 		NOMAD::begin ( 0 , NULL );
 		
 		int n = GetNumVariables();
+
+		// If no variables are retrieved from Excel (due to an error or otherwise), we cannot proceed.
+		if (n < 1) {
+			return (long) EXIT_FAILURE;
+		}
+
 		double * const LowerBounds = new double[(int) n];
 		double * const UpperBounds = new double[(int) n];
 		double * const startingPoint = new double[(int) n];
@@ -359,7 +363,6 @@ void GetNumConstraints(int* numCons, int* nObj)
 	funcName.xltype=xltypeStr;
 
 	Excel12(xlUDF,&xResult,1,&funcName);
-
 	*numCons=(int)xResult.val.array.lparray[0].val.num;
 	*nObj=(int)xResult.val.array.lparray[1].val.num;
 
@@ -370,6 +373,25 @@ void GetNumConstraints(int* numCons, int* nObj)
 //outputs=number of variables
 int GetNumVariables(void)
 {
+	XLOPER12 xRes;
+    static HANDLE hOld = 0;
+    short iRet;
+
+    if (Excel12(xlGetInst, &xRes, 0) != xlretSuccess)
+        iRet = -1;
+    else
+    {
+    HANDLE hNew;
+
+    hNew = (HANDLE)xRes.val.w;
+    if (hNew != hOld)
+            iRet = 0;
+    else
+            iRet = 1;
+    hOld = hNew;
+    }
+
+
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
 	funcName.val.str=L"\034OpenSolver.getNumVariables";
