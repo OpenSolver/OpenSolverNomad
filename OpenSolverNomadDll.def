@@ -1,0 +1,9 @@
+LIBRARY OpenSolverNomadDll.dll
+
+ 
+
+EXPORTS
+
+
+
+       NomadMain

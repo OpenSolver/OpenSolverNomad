@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nomad", "nomad.vcxproj", "{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E} = {FBB640B4-E68B-4EBA-B49C-3EC485FB488E}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nomad_lib", "nomad_lib.vcxproj", "{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C7DB4B9-083A-4927-B821-364D8E95BF43}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\install\readme.txt = ..\..\install\readme.txt
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basic_lib_single_obj", "basic_lib_single_obj.vcxproj", "{B1AC271C-84AD-456E-A23B-AEF568CB0199}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E} = {FBB640B4-E68B-4EBA-B49C-3EC485FB488E}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Release|Win32.ActiveCfg = Release|Win32
+		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Release|Win32.Build.0 = Release|Win32
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|Win32.ActiveCfg = Release|Win32
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|Win32.Build.0 = Release|Win32
+		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Release|Win32.ActiveCfg = Release|Win32
+		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
