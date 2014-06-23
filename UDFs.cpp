@@ -450,9 +450,9 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	Excel12(xlFree,0,1,&xOpMulti);
 	
 	for (unsigned short i=0;i<numCons;i++) {
-		// Check for "NaN" passed back from VBA and set to C++ NaN.
-		if (xResult.val.array.lparray[i].xltype == xltypeStr && 
-			wcscmp(xResult.val.array.lparray[i].val.str, L"\003NaN")) {
+		// Check for error passed back from VBA and set to C++ NaN.
+		// We need to catch errors separately as they are otherwise interpreted as having value zero.
+		if (xResult.val.array.lparray[i].xltype != xltypeNum) {
 		    *(newCons+i) = std::numeric_limits<double>::quiet_NaN();
 		} else {
 			*(newCons+i)=xResult.val.array.lparray[i].val.num;
