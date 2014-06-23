@@ -9,6 +9,8 @@
 
 #include <xlcall.h>
 
+#include <limits>
+
 #include <stdio.h>
 
 #include <string>
@@ -448,7 +450,13 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	Excel12(xlFree,0,1,&xOpMulti);
 	
 	for (unsigned short i=0;i<numCons;i++) {
-		*(newCons+i)=xResult.val.array.lparray[i].val.num;
+		// Check for "NaN" passed back from VBA and set to C++ NaN.
+		if (xResult.val.array.lparray[i].xltype == xltypeStr && 
+			wcscmp(xResult.val.array.lparray[i].val.str, L"\003NaN")) {
+		    *(newCons+i) = std::numeric_limits<double>::quiet_NaN();
+		} else {
+			*(newCons+i)=xResult.val.array.lparray[i].val.num;
+		}
 	}
 	return;
 }
