@@ -20,17 +20,27 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basic_lib_single_obj", "bas
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Debug|x64.ActiveCfg = Debug|Win32
 		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Release|Win32.ActiveCfg = Release|Win32
 		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Release|Win32.Build.0 = Release|Win32
 		{95048BDF-C2BA-4BEB-B1AD-459CA10DC63D}.Release|x64.ActiveCfg = Debug|Win32
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Debug|Win32.Build.0 = Debug|Win32
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Debug|x64.ActiveCfg = Debug|x64
+		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Debug|x64.Build.0 = Debug|x64
 		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|Win32.ActiveCfg = Release|Win32
 		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|Win32.Build.0 = Release|Win32
 		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|x64.ActiveCfg = Release|x64
 		{FBB640B4-E68B-4EBA-B49C-3EC485FB488E}.Release|x64.Build.0 = Release|x64
+		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Debug|x64.ActiveCfg = Debug|Win32
 		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Release|Win32.ActiveCfg = Release|Win32
 		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Release|Win32.Build.0 = Release|Win32
 		{B1AC271C-84AD-456E-A23B-AEF568CB0199}.Release|x64.ActiveCfg = Release|Win32
