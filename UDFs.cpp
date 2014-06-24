@@ -138,7 +138,7 @@ long _stdcall NomadMain (bool SolveRelaxation)
 
 		// If no variables are retrieved from Excel (due to an error or otherwise), we cannot proceed.
 		if (n < 1) {
-			return (long) EXIT_FAILURE;
+			throw "No variables returned;
 		}
 
 		double * const LowerBounds = new double[(int) n];
@@ -364,7 +364,11 @@ void GetNumConstraints(int* numCons, int* nObj)
 	funcName.val.str=L"\034OpenSolver.getNumConstraints";
 	funcName.xltype=xltypeStr;
 
-	Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
+		xResult.val.array.rows * xResult.val.array.columns != 2) {
+		throw "getNumConstraints failed";
+	}
 	*numCons=(int)xResult.val.array.lparray[0].val.num;
 	*nObj=(int)xResult.val.array.lparray[1].val.num;
 
@@ -375,32 +379,15 @@ void GetNumConstraints(int* numCons, int* nObj)
 //outputs=number of variables
 int GetNumVariables(void)
 {
-	XLOPER12 xRes;
-    static HANDLE hOld = 0;
-    short iRet;
-
-    if (Excel12(xlGetInst, &xRes, 0) != xlretSuccess)
-        iRet = -1;
-    else
-    {
-    HANDLE hNew;
-
-    hNew = (HANDLE)xRes.val.w;
-    if (hNew != hOld)
-            iRet = 0;
-    else
-            iRet = 1;
-    hOld = hNew;
-    }
-
-
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
 	funcName.val.str=L"\034OpenSolver.getNumVariables";
 	funcName.xltype=xltypeStr;
 
-	Excel12(xlUDF,&xResult,1,&funcName);
-
+	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeNum) {
+		throw "getNumVariables failed";
+	}
 	return (int) xResult.val.num;
 }
 
@@ -444,9 +431,27 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	funcName2.xltype=xltypeStr;
 	funcName2.val.str=L"\034OpenSolver.RecalculateValues";
 
-	Excel12(xlUDF, 0, 2, &funcName, &xOpMulti);
-	Excel12(xlUDF, 0,1,&funcName2);
-	Excel12(xlUDF,&xResult,1,&funcName1);
+	int ret;
+
+	// Update variables
+	ret = Excel12(xlUDF, 0, 2, &funcName, &xOpMulti);
+	if (ret == xlretAbort || ret == xlretUncalced) {
+		throw "updateVar failed";
+	}
+
+	// Recalculate values
+	ret = Excel12(xlUDF, 0,1,&funcName2);
+	if (ret == xlretAbort || ret == xlretUncalced) {
+		throw "getValues failed";
+	}
+
+	// Get constraint values
+	ret = Excel12(xlUDF,&xResult,1,&funcName1);
+	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti ||
+		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
+		throw "RecalculateValues failed";
+	}
+
 	Excel12(xlFree,0,1,&xOpMulti);
 	
 	for (unsigned short i=0;i<numCons;i++) {
@@ -475,8 +480,12 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 	funcName.val.str=L"\035OpenSolver.getVariableData";
 	funcName.xltype=xltypeStr;
 	
-	Excel12(xlUDF,&xResult,1,&funcName);
-	
+	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
+		xResult.val.array.rows * xResult.val.array.columns != 4*(int)numVars) {
+		throw "getVariableData failed";
+	}
+
 	//get the lower and upper bounds for each of the variables
 	for (int i=0;i<numVars;i++) {
 		*(LowerBounds+i)=xResult.val.array.lparray[2*i].val.num;
@@ -504,10 +513,14 @@ void getOptionData(double *OptionData)
 	funcName.val.str=L"\033OpenSolver.getOptionData";
 	funcName.xltype=xltypeStr;
 	
-	Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
+		xResult.val.array.rows * xResult.val.array.columns != 3) {
+		throw "getVariableData failed";
+	}
 
-	for ( int i=0;i<3;i++)
+	for ( int i=0;i<3;i++) {
 		*(OptionData+i)=xResult.val.array.lparray[i].val.num;
-
+	}
 	return;
 }
