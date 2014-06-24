@@ -138,7 +138,7 @@ long _stdcall NomadMain (bool SolveRelaxation)
 
 		// If no variables are retrieved from Excel (due to an error or otherwise), we cannot proceed.
 		if (n < 1) {
-			throw "No variables returned;
+			throw "No variables returned";
 		}
 
 		double * const LowerBounds = new double[(int) n];
