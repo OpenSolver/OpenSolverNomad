@@ -451,8 +451,6 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
 		throw "RecalculateValues failed";
 	}
-
-	Excel12(xlFree,0,1,&xOpMulti);
 	
 	for (unsigned short i=0;i<numCons;i++) {
 		// Check for error passed back from VBA and set to C++ NaN.
@@ -463,6 +461,9 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 			*(newCons+i)=xResult.val.array.lparray[i].val.num;
 		}
 	}
+	
+	// Free memory allocated by Excel
+	Excel12(xlFree,0,1,&xResult);
 	return;
 }
 
