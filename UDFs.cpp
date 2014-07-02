@@ -95,6 +95,8 @@ public:
 };
 ========================================================================================*/
 
+// This function must be called directly within VBA i.e. retCode = NomadMain(SolveRelaxation).
+// If Application.Run is used instead, the Excel12 API calls will fail in 64-bit Office.
 long _stdcall NomadMain (bool SolveRelaxation)
 {
 	//get a temp path to write parameters etc to
