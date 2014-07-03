@@ -15,7 +15,11 @@
 
 #include <string>
 
+#include <atlbase.h>
+
 using namespace std;
+
+const string DLL_VERSION = "1.0.0";
 
 void GetNumConstraints(int* numCons, int* nObj);
 int GetNumVariables(void);
@@ -94,6 +98,16 @@ public:
     }        
 };
 ========================================================================================*/
+
+extern "C" BSTR _stdcall NomadVersion ()
+{
+	return CComBSTR(NOMAD::VERSION.c_str());
+}
+
+extern "C" BSTR _stdcall NomadDLLVersion ()
+{
+	return CComBSTR(DLL_VERSION.c_str());
+}
 
 // This function must be called directly within VBA i.e. retCode = NomadMain(SolveRelaxation).
 // If Application.Run is used instead, the Excel12 API calls will fail in 64-bit Office.
