@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;OPENSOLVERNOMADDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\NOMAD source;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\OpenSolverNomadLib\src;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,7 +95,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver Release\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -105,7 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;OPENSOLVERNOMADDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\NOMAD source;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\OpenSolverNomadLib\src;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,7 +115,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\opensolver release\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -127,7 +127,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;OPENSOLVERNOMADDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\NOMAD source;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\OpenSolverNomadLib\src;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -140,7 +140,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\opensolver release\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -152,7 +152,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;OPENSOLVERNOMADDLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\NOMAD source;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\OpenSolverNomadLib\src;$(SolutionDir)\Excel2010XLLSDK\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -165,7 +165,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\opensolver release\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -174,9 +174,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="OpenSolverNomadDll.def" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="nomad.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

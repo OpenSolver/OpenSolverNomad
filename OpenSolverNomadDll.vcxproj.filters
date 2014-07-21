@@ -23,11 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="nomad.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="OpenSolverNomadDll.def">
       <Filter>Resource Files</Filter>
     </None>
