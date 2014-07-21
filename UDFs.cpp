@@ -1,8 +1,5 @@
 // UDFs.c
 
-//needs to be defined to stop a warning on compiling
-#define _ITERATOR_DEBUG_LEVEL 0
-
 #include "nomad.hpp"
 
 #include <windows.h>
