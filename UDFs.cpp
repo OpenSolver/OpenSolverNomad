@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const string DLL_VERSION = "1.0.0";
+const string DLL_VERSION = "1.0.1";
 
 void GetNumConstraints(int* numCons, int* nObj);
 int GetNumVariables(void);
