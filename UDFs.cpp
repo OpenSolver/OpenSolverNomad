@@ -245,6 +245,7 @@ long _stdcall NomadMain (bool SolveRelaxation)
 		p.set_MAX_BB_EVAL ((int)OptionData[0]);
 		p.set_MAX_TIME ((int)OptionData[1]);
 		p.set_EPSILON(OptionData[2]);
+		p.set_H_MIN(OptionData[2]);
 		//p.set_MIN_MESH_SIZE(OptionData[2]);
 		
 		// parameters check:
