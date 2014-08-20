@@ -106,6 +106,8 @@ extern "C" BSTR _stdcall NomadDLLVersion ()
 	return CComBSTR(DLL_VERSION.c_str());
 }
 
+NOMAD::Mads *mads;
+
 // This function must be called directly within VBA i.e. retCode = NomadMain(SolveRelaxation).
 // If Application.Run is used instead, the Excel12 API calls will fail in 64-bit Office.
 long _stdcall NomadMain (bool SolveRelaxation)
@@ -255,7 +257,6 @@ long _stdcall NomadMain (bool SolveRelaxation)
 		out << p << endl;
 
 		//Nomad vars
-		NOMAD::Mads *mads;
 		NOMAD::stop_type stopflag;
 
 		/*=======================================================================
@@ -438,6 +439,31 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
         xOpArray[i].val.num = *(newVars+i);
     }
 
+	// Get current solution for status updating
+	bool feasibility = true;
+	const NOMAD::Eval_Point *bestSol = mads->get_best_feasible();
+	if(bestSol == NULL) {
+		bestSol = mads->get_best_infeasible();  
+		//manually set as infeasible (no infeasible stop flag)
+		feasibility = false;
+	}
+
+	// Create XLOPER12 objects for passing in solution and feasibility
+
+	// Pass solution in as Double, or vbNothing if no solution
+	XLOPER12 xOpSol;
+	if (bestSol == NULL) {
+		xOpSol.xltype = xltypeMissing|xlbitDLLFree;
+	} else {
+		xOpSol.xltype = xltypeNum|xlbitDLLFree;
+		xOpSol.val.num = bestSol->get_f().value();
+	}
+
+	// Pass in feasibility status as bool
+	XLOPER12 xOpFeas;
+	xOpFeas.xltype = xltypeBool|xlbitDLLFree;
+	xOpFeas.val.xbool = feasibility;
+
 	funcName.xltype=xltypeStr;
 	funcName.val.str=L"\024OpenSolver.updateVar";
 	funcName1.xltype=xltypeStr;
@@ -448,7 +474,7 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	int ret;
 
 	// Update variables
-	ret = Excel12(xlUDF, 0, 2, &funcName, &xOpMulti);
+	ret = Excel12(xlUDF, 0, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
 	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "updateVar failed";
 	}
