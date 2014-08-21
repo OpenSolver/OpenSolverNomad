@@ -340,7 +340,10 @@ long _stdcall NomadMain (bool SolveRelaxation)
 		myfile.close();
 
 		//return values
-		if ((retval !=0) & (!feasibility)) {
+		if (stopflag == NOMAD::stop_type::CTRL_C) {
+			return -3;
+		}
+		else if ((retval !=0) & (!feasibility)) {
 			retval=4;
 			return retval;
 		}
@@ -462,7 +465,7 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	// Pass in feasibility status as bool
 	XLOPER12 xOpFeas;
 	xOpFeas.xltype = xltypeBool|xlbitDLLFree;
-	xOpFeas.val.xbool = feasibility;
+	xOpFeas.val.xbool = !feasibility;
 
 	funcName.xltype=xltypeStr;
 	funcName.val.str=L"\024OpenSolver.updateVar";
@@ -474,15 +477,22 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	int ret;
 
 	// Update variables
-	ret = Excel12(xlUDF, 0, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
+	ret = Excel12(xlUDF, &xResult, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
 	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "updateVar failed";
+	// check for abort
+	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
+		mads->force_quit(0);
+		return;
 	}
 
 	// Recalculate values
 	ret = Excel12(xlUDF, 0,1,&funcName2);
 	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "getValues failed";
+	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
+		mads->force_quit(0);
+		return;
 	}
 
 	// Get constraint values
@@ -490,6 +500,9 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti ||
 		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
 		throw "RecalculateValues failed";
+	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
+		mads->force_quit(0);
+		return;
 	}
 	
 	for (unsigned short i=0;i<numCons;i++) {
