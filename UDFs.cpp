@@ -416,6 +416,27 @@ int GetNumVariables(void)
 //			numCons=number of constraints
 void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 {
+	XLOPER12 xOpAbort, xOpConfirm, xOpMessage, xOpBool, xOpAlertType;
+	xOpMessage.xltype = xltypeStr;
+	xOpMessage.val.str = L"\075You have pressed the Escape key. Do you wish to stop solving?";
+	xOpAlertType.xltype = xltypeNum;
+	xOpAlertType.val.num = 1; // An OK/Cancel alert box
+	xOpBool.xltype = xltypeBool;
+	xOpBool.val.xbool = false;
+
+	// Check for escape key press
+	// http://msdn.microsoft.com/en-us/library/office/bb687825%28v=office.15%29.aspx
+	Excel12(xlAbort, &xOpAbort, 0);
+    if (xOpAbort.val.xbool) {
+		Excel12(xlcAlert, &xOpConfirm, 2,(LPXLOPER12) &xOpMessage, &xOpAlertType);
+        if (xOpConfirm.val.xbool) {
+			mads->force_quit(0);
+			return;
+        } else {
+			Excel12(xlAbort, 0, 1, &xOpBool);
+        }
+    }
+	
 	static XLOPER12 xResult;
 	XLOPER12 funcName, funcName1, funcName2;
 
@@ -480,19 +501,12 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	ret = Excel12(xlUDF, &xResult, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
 	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "updateVar failed";
-	// check for abort
-	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
-		mads->force_quit(0);
-		return;
 	}
 
 	// Recalculate values
 	ret = Excel12(xlUDF, 0,1,&funcName2);
 	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "getValues failed";
-	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
-		mads->force_quit(0);
-		return;
 	}
 
 	// Get constraint values
@@ -500,9 +514,6 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti ||
 		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
 		throw "RecalculateValues failed";
-	} else if (xResult.xltype == xltypeBool && xResult.val.xbool) {
-		mads->force_quit(0);
-		return;
 	}
 	
 	for (unsigned short i=0;i<numCons;i++) {
