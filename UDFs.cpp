@@ -418,7 +418,7 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 {
 	XLOPER12 xOpAbort, xOpConfirm, xOpMessage, xOpBool, xOpAlertType;
 	xOpMessage.xltype = xltypeStr;
-	xOpMessage.val.str = L"\075You have pressed the Escape key. Do you wish to stop solving?";
+	xOpMessage.val.str = L"\075You have pressed the Escape key. Do you wish to keep solving?";
 	xOpAlertType.xltype = xltypeNum;
 	xOpAlertType.val.num = 1; // An OK/Cancel alert box
 	xOpBool.xltype = xltypeBool;
@@ -429,7 +429,7 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	Excel12(xlAbort, &xOpAbort, 0);
     if (xOpAbort.val.xbool) {
 		Excel12(xlcAlert, &xOpConfirm, 2,(LPXLOPER12) &xOpMessage, &xOpAlertType);
-        if (xOpConfirm.val.xbool) {
+        if (!xOpConfirm.val.xbool) {
 			mads->force_quit(0);
 			return;
         } else {
