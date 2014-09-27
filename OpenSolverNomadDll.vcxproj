@@ -22,6 +22,7 @@
     <ProjectGuid>{71759F0F-B521-4585-9E9B-69FA0406A4CF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>OpenSolverNomadDll</RootNamespace>
+    <ProjectName>OpenSolverNomad</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -69,14 +70,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)64</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)64</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -95,7 +96,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\Solvers\win32\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,7 +116,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\Solvers\win64\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -140,7 +141,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\Solvers\win32\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -165,7 +166,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)..\OpenSolver\Solvers\win64\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -173,7 +174,7 @@
     <ClCompile Include="UDFs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OpenSolverNomadDll.def" />
+    <None Include="OpenSolverNomad.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

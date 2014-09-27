@@ -23,7 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="OpenSolverNomadDll.def">
+    <None Include="OpenSolverNomad.def">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
