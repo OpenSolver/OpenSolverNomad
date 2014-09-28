@@ -358,9 +358,10 @@ long _stdcall NomadMain (bool SolveRelaxation)
 			return (long) EXIT_SUCCESS;
 		}
 	}
-	catch ( ... ) {
+	catch ( exception& e ) {
 		NOMAD::Slave::stop_slaves ( out );
 		NOMAD::end();
+		out << e.what() << endl;
 		myfile.close();
 		return (long) EXIT_FAILURE;
 	}
