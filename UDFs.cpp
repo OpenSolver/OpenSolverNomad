@@ -340,7 +340,7 @@ long _stdcall NomadMain (bool SolveRelaxation)
 		myfile.close();
 
 		//return values
-		if (stopflag == NOMAD::stop_type::CTRL_C) {
+		if (stopflag == NOMAD::CTRL_C) {
 			return -3;
 		}
 		else if ((retval !=0) & (!feasibility)) {
