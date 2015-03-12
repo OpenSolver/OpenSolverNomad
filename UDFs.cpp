@@ -22,7 +22,7 @@ void GetNumConstraints(int* numCons, int* nObj);
 int GetNumVariables(void);
 void EvaluateX(double *newVars, double size, double *newCons, double numCons);
 void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *type, double numVars);
-void getOptionData(double *OptionData);
+void GetOptionData(double *OptionData);
 
 //*--------------------------------------*/
 //*            custom evaluator          */
@@ -239,7 +239,7 @@ long _stdcall NomadMain (bool SolveRelaxation)
 
 		//getting parameter data
 		double * const OptionData = new double[(int) 3];
-		getOptionData(OptionData);
+		GetOptionData(OptionData);
 
 		p.set_DISPLAY_STATS ( "bbe ( sol ) obj" );
 
@@ -380,13 +380,13 @@ void GetNumConstraints(int* numCons, int* nObj)
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
 
-	funcName.val.str=L"\034OpenSolver.getNumConstraints";
+	funcName.val.str=L"\042OpenSolver.NOMAD_GetNumConstraints";
 	funcName.xltype=xltypeStr;
 
 	int ret = Excel12(xlUDF,&xResult,1,&funcName);
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
 		xResult.val.array.rows * xResult.val.array.columns != 2) {
-		throw "getNumConstraints failed";
+		throw "NOMAD_GetNumConstraints failed";
 	}
 	*numCons=(int)xResult.val.array.lparray[0].val.num;
 	*nObj=(int)xResult.val.array.lparray[1].val.num;
@@ -400,12 +400,12 @@ int GetNumVariables(void)
 {
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
-	funcName.val.str=L"\034OpenSolver.getNumVariables";
+	funcName.val.str=L"\042OpenSolver.NOMAD_GetNumVariables";
 	funcName.xltype=xltypeStr;
 
 	int ret = Excel12(xlUDF,&xResult,1,&funcName);
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeNum) {
-		throw "getNumVariables failed";
+		throw "NOMAD_GetNumVariables failed";
 	}
 	return (int) xResult.val.num;
 }
@@ -441,23 +441,23 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	static XLOPER12 xResult;
 	XLOPER12 funcName, funcName1, funcName2;
 
-// In this implementation, the upper limit is the largest
-// single column array (equals 2^20, or 1048576, rows in Excel 2007).
+    // In this implementation, the upper limit is the largest
+    // single column array (equals 2^20, or 1048576, rows in Excel 2007).
     if(size < 1 || size > 1048576)
         return;
 
-// Create an array of XLOPER12 values.
+    // Create an array of XLOPER12 values.
     XLOPER12 *xOpArray = (XLOPER12 *)malloc((size_t)size * sizeof(XLOPER12));
 
-// Create and initialize an xltypeMulti array
-// that represents a one-column array.
+    // Create and initialize an xltypeMulti array
+    // that represents a one-column array.
     XLOPER12 xOpMulti;
     xOpMulti.xltype = xltypeMulti|xlbitDLLFree;
     xOpMulti.val.array.lparray = xOpArray;
     xOpMulti.val.array.columns = 1;
     xOpMulti.val.array.rows = (RW) size;
 
-// Initialize and populate the array of XLOPER12 values.
+    // Initialize and populate the array of XLOPER12 values.
     for(unsigned short i = 0; i < size; i++)
     {
         xOpArray[i].xltype = xltypeNum;
@@ -490,31 +490,31 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	xOpFeas.val.xbool = !feasibility;
 
 	funcName.xltype=xltypeStr;
-	funcName.val.str=L"\024OpenSolver.updateVar";
+	funcName.val.str=L"\032OpenSolver.NOMAD_UpdateVar";
 	funcName1.xltype=xltypeStr;
-	funcName1.val.str=L"\024OpenSolver.getValues";
+	funcName1.val.str=L"\032OpenSolver.NOMAD_GetValues";
 	funcName2.xltype=xltypeStr;
-	funcName2.val.str=L"\034OpenSolver.RecalculateValues";
+	funcName2.val.str=L"\042OpenSolver.NOMAD_RecalculateValues";
 
 	int ret;
 
 	// Update variables
 	ret = Excel12(xlUDF, &xResult, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
 	if (ret == xlretAbort || ret == xlretUncalced) {
-		throw "updateVar failed";
+		throw "NOMAD_UpdateVar failed";
 	}
 
 	// Recalculate values
 	ret = Excel12(xlUDF, 0,1,&funcName2);
 	if (ret == xlretAbort || ret == xlretUncalced) {
-		throw "getValues failed";
+		throw "NOMAD_GetValues failed";
 	}
 
 	// Get constraint values
 	ret = Excel12(xlUDF,&xResult,1,&funcName1);
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti ||
 		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
-		throw "RecalculateValues failed";
+		throw "NOMAD_RecalculateValues failed";
 	}
 	
 	for (unsigned short i=0;i<numCons;i++) {
@@ -543,13 +543,13 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 	static XLOPER12 xResult;
 
 	XLOPER12 funcName;
-	funcName.val.str=L"\035OpenSolver.getVariableData";
+	funcName.val.str=L"\043OpenSolver.NOMAD_GetVariableData";
 	funcName.xltype=xltypeStr;
 	
 	int ret = Excel12(xlUDF,&xResult,1,&funcName);
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
 		xResult.val.array.rows * xResult.val.array.columns != 4*(int)numVars) {
-		throw "getVariableData failed";
+		throw "NOMAD_GetVariableData failed";
 	}
 
 	//get the lower and upper bounds for each of the variables
@@ -572,17 +572,17 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 //inputs:	OptionData[0]=max iterations
 //			OptionData[1]=max time
 //			OptionData[2]=tolerance-epsilon
-void getOptionData(double *OptionData)
+void GetOptionData(double *OptionData)
 {
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
-	funcName.val.str=L"\033OpenSolver.getOptionData";
+	funcName.val.str=L"\041OpenSolver.NOMAD_GetOptionData";
 	funcName.xltype=xltypeStr;
 	
 	int ret = Excel12(xlUDF,&xResult,1,&funcName);
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
 		xResult.val.array.rows * xResult.val.array.columns != 3) {
-		throw "getVariableData failed";
+		throw "NOMAD_GetOptionData failed";
 	}
 
 	for ( int i=0;i<3;i++) {
