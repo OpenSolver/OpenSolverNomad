@@ -16,13 +16,13 @@
 
 using namespace std;
 
-const string DLL_VERSION = "1.0.2";
+const string DLL_VERSION = "1.1.0";
 
 void GetNumConstraints(int* numCons, int* nObj);
 int GetNumVariables(void);
 void EvaluateX(double *newVars, double size, double *newCons, double numCons);
 void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *type, double numVars);
-void GetOptionData(double *OptionData);
+void GetOptionData(NOMAD::Parameters *p);
 
 //*--------------------------------------*/
 //*            custom evaluator          */
@@ -237,18 +237,10 @@ long _stdcall NomadMain (bool SolveRelaxation)
 
 		// p.set_DISPLAY_DEGREE ( FULL_DISPLAY );
 
-		//getting parameter data
-		double * const OptionData = new double[(int) 3];
-		GetOptionData(OptionData);
-
 		p.set_DISPLAY_STATS ( "bbe ( sol ) obj" );
 
-		//==========set user options============================================
-		p.set_MAX_BB_EVAL ((int)OptionData[0]);
-		p.set_MAX_TIME ((int)OptionData[1]);
-		p.set_EPSILON(OptionData[2]);
-		p.set_H_MIN(OptionData[2]);
-		//p.set_MIN_MESH_SIZE(OptionData[2]);
+		// set user options
+		GetOptionData(&p);
 		
 		// parameters check:
 		p.check();
@@ -323,11 +315,11 @@ long _stdcall NomadMain (bool SolveRelaxation)
 
 		//check if it reached the bounds of time and iterations
 		long retval=0;
-		if (mads->get_stats().get_real_time()==OptionData[1])
+		if (mads->get_stats().get_real_time() == p.get_max_time())
 		{
 			retval = 3;
 		}
-		else if (mads->get_stats().get_bb_eval()==OptionData[0]){
+		else if (mads->get_stats().get_bb_eval() == p.get_max_bb_eval()){
 			retval = 2;
 		}
 		
@@ -572,7 +564,7 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 //inputs:	OptionData[0]=max iterations
 //			OptionData[1]=max time
 //			OptionData[2]=tolerance-epsilon
-void GetOptionData(double *OptionData)
+void GetOptionData(NOMAD::Parameters *p)
 {
 	static XLOPER12 xResult;
 	XLOPER12 funcName;
@@ -580,13 +572,39 @@ void GetOptionData(double *OptionData)
 	funcName.xltype=xltypeStr;
 	
 	int ret = Excel12(xlUDF,&xResult,1,&funcName);
-	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
-		xResult.val.array.rows * xResult.val.array.columns != 3) {
+	if (ret == xlretAbort || ret == xlretUncalced) {
 		throw "NOMAD_GetOptionData failed";
 	}
 
-	for ( int i=0;i<3;i++) {
-		*(OptionData+i)=xResult.val.array.lparray[i].val.num;
+	NOMAD::Parameter_Entries entries;
+	NOMAD::Parameter_Entry *pe;
+	std::string s;
+	std::string err;
+	wstring ws;
+	int n;
+	int m = xResult.val.array.rows;
+
+	for (int i = 0; i < m; ++i) {
+		// Get the string value out of the result
+		n = (int) xResult.val.array.lparray[2 * i + 1].val.num;
+		ws = wstring(xResult.val.array.lparray[2 * i].val.str);
+		s = string(ws.begin(), ws.end()).substr(1, n);
+
+		// Add the parameter to the entries
+		pe = new NOMAD::Parameter_Entry(s);
+		if (pe->is_ok()) {
+			entries.insert(pe); // pe will be deleted by ~Parameter_Entries()
+		} else {
+			if ((pe->get_name() != "" && pe->get_nb_values() == 0) || pe->get_name() == "STATS_FILE") {
+				err = "invalid parameter: " + pe->get_name();
+				delete pe;
+				throw err;
+			}
+			delete pe;
+		}
 	}
+
+	// Read all the new entries into p
+	p->read(entries);  
 	return;
 }
