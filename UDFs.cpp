@@ -409,11 +409,9 @@ int GetNumVariables(void)
 //			numCons=number of constraints
 void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 {
-	XLOPER12 xOpAbort, xOpConfirm, xOpMessage, xOpBool, xOpAlertType;
-	xOpMessage.xltype = xltypeStr;
-	xOpMessage.val.str = L"\075You have pressed the Escape key. Do you wish to keep solving?";
-	xOpAlertType.xltype = xltypeNum;
-	xOpAlertType.val.num = 1; // An OK/Cancel alert box
+	XLOPER12 xOpAbort, xOpConfirm, xOpBool, funcName;
+	funcName.val.str=L"\042OpenSolver.NOMAD_ShowCancelDialog";
+	funcName.xltype=xltypeStr;
 	xOpBool.xltype = xltypeBool;
 	xOpBool.val.xbool = false;
 
@@ -421,17 +419,22 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	// http://msdn.microsoft.com/en-us/library/office/bb687825%28v=office.15%29.aspx
 	Excel12(xlAbort, &xOpAbort, 0);
     if (xOpAbort.val.xbool) {
-		Excel12(xlcAlert, &xOpConfirm, 2,(LPXLOPER12) &xOpMessage, &xOpAlertType);
-        if (!xOpConfirm.val.xbool) {
+		int ret = Excel12(xlUDF, &xOpConfirm, 1, &funcName);
+		if (ret == xlretAbort || ret == xlretUncalced || xOpConfirm.xltype != xltypeBool) {
+			throw "NOMAD_ShowCancelDialog failed";
+		}
+
+        if (xOpConfirm.val.xbool) {
 			mads->force_quit(0);
 			return;
         } else {
+			// Clear the escape key press so we can resume
 			Excel12(xlAbort, 0, 1, &xOpBool);
         }
     }
 	
 	static XLOPER12 xResult;
-	XLOPER12 funcName, funcName1, funcName2;
+	XLOPER12 funcName1, funcName2;
 
     // In this implementation, the upper limit is the largest
     // single column array (equals 2^20, or 1048576, rows in Excel 2007).
