@@ -551,6 +551,9 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 	for (int i=0;i<numVars;i++) {
 		*(LowerBounds+i)=xResult.val.array.lparray[2*i].val.num;
 		*(UpperBounds+i)=xResult.val.array.lparray[2*i+1].val.num;
+		if (*(UpperBounds+i) >= 1e10) {
+			*(UpperBounds+i) = NOMAD::INF;
+		}
 	}
 
 	//get start point
