@@ -2,7 +2,7 @@
 
 This is the C++ NOMAD interface that links OpenSolver and NOMAD together. This project builds both the 32 and 64 bit dlls that are used by OpenSolver to call NOMAD.
 
-The output of this solution is: `OpenSolverNomadDll.dll` and `OpenSolverDll64.dll`
+The output of this solution is the file `OpenSolverNomadDll.dll`.
 
 ##### Inputs:
 
