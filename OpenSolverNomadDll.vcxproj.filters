@@ -18,9 +18,6 @@
     <ClCompile Include="UDFs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Excel2010XLLSDK\SRC\XLCALL.CPP">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="OpenSolverNomad.def">

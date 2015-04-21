@@ -4,7 +4,8 @@
 
 #include <windows.h>
 
-#include <xlcall.h>
+#include <XLCALL.H>
+#include <framewrk.h>
 
 #include <limits>
 
@@ -370,19 +371,19 @@ long _stdcall NomadMain (bool SolveRelaxation)
 void GetNumConstraints(int* numCons, int* nObj)
 {
 	static XLOPER12 xResult;
-	XLOPER12 funcName;
 
-	funcName.val.str=L"\042OpenSolver.NOMAD_GetNumConstraints";
-	funcName.xltype=xltypeStr;
-
-	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(L"OpenSolver.NOMAD_GetNumConstraints"));
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
 		xResult.val.array.rows * xResult.val.array.columns != 2) {
+		Excel12f(xlFree, 0, 1, &xResult);
 		throw "NOMAD_GetNumConstraints failed";
 	}
-	*numCons=(int)xResult.val.array.lparray[0].val.num;
-	*nObj=(int)xResult.val.array.lparray[1].val.num;
 
+	*numCons = (int) xResult.val.array.lparray[0].val.num;
+	*nObj = (int) xResult.val.array.lparray[1].val.num;
+
+	// Free up Excel-allocated array
+	Excel12f(xlFree, 0, 1, &xResult);
 	return;
 }
 
@@ -391,15 +392,17 @@ void GetNumConstraints(int* numCons, int* nObj)
 int GetNumVariables(void)
 {
 	static XLOPER12 xResult;
-	XLOPER12 funcName;
-	funcName.val.str=L"\042OpenSolver.NOMAD_GetNumVariables";
-	funcName.xltype=xltypeStr;
 
-	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(L"OpenSolver.NOMAD_GetNumVariables"));
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeNum) {
+		Excel12f(xlFree, 0, 1, &xResult);
 		throw "NOMAD_GetNumVariables failed";
 	}
-	return (int) xResult.val.num;
+
+	int result = (int) xResult.val.num;
+
+	Excel12f(xlFree, 0, 1, &xResult);
+	return result;
 }
 
 //Calls excel to evaluate each new point of X
@@ -409,32 +412,33 @@ int GetNumVariables(void)
 //			numCons=number of constraints
 void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 {
-	XLOPER12 xOpAbort, xOpConfirm, xOpBool, funcName;
-	funcName.val.str=L"\042OpenSolver.NOMAD_ShowCancelDialog";
-	funcName.xltype=xltypeStr;
-	xOpBool.xltype = xltypeBool;
-	xOpBool.val.xbool = false;
+	XLOPER12 xOpAbort, xOpConfirm;
 
 	// Check for escape key press
 	// http://msdn.microsoft.com/en-us/library/office/bb687825%28v=office.15%29.aspx
-	Excel12(xlAbort, &xOpAbort, 0);
+	Excel12f(xlAbort, &xOpAbort, 0);
     if (xOpAbort.val.xbool) {
-		int ret = Excel12(xlUDF, &xOpConfirm, 1, &funcName);
+		Excel12f(xlFree, 0, 2, &xOpAbort);
+
+		int ret = Excel12f(xlUDF, &xOpConfirm, 1, TempStr12(L"OpenSolver.NOMAD_ShowCancelDialog"));
 		if (ret == xlretAbort || ret == xlretUncalced || xOpConfirm.xltype != xltypeBool) {
+			Excel12f(xlFree, 0, 1, &xOpConfirm);
 			throw "NOMAD_ShowCancelDialog failed";
 		}
 
         if (xOpConfirm.val.xbool) {
+			Excel12f(xlFree, 0, 1, &xOpConfirm);
 			mads->force_quit(0);
 			return;
         } else {
 			// Clear the escape key press so we can resume
-			Excel12(xlAbort, 0, 1, &xOpBool);
+			Excel12f(xlAbort, 0, 1, TempBool12(false));
         }
+
+		Excel12f(xlFree, 0, 1, &xOpConfirm);
     }
 	
 	static XLOPER12 xResult;
-	XLOPER12 funcName1, funcName2;
 
     // In this implementation, the upper limit is the largest
     // single column array (equals 2^20, or 1048576, rows in Excel 2007).
@@ -473,43 +477,34 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	// Pass solution in as Double, or vbNothing if no solution
 	XLOPER12 xOpSol;
 	if (bestSol == NULL) {
-		xOpSol.xltype = xltypeMissing|xlbitDLLFree;
+		xOpSol.xltype = xltypeMissing|xlbitXLFree;
 	} else {
-		xOpSol.xltype = xltypeNum|xlbitDLLFree;
+		xOpSol.xltype = xltypeNum|xlbitXLFree;
 		xOpSol.val.num = bestSol->get_f().value();
 	}
-
-	// Pass in feasibility status as bool
-	XLOPER12 xOpFeas;
-	xOpFeas.xltype = xltypeBool|xlbitDLLFree;
-	xOpFeas.val.xbool = !feasibility;
-
-	funcName.xltype=xltypeStr;
-	funcName.val.str=L"\032OpenSolver.NOMAD_UpdateVar";
-	funcName1.xltype=xltypeStr;
-	funcName1.val.str=L"\032OpenSolver.NOMAD_GetValues";
-	funcName2.xltype=xltypeStr;
-	funcName2.val.str=L"\042OpenSolver.NOMAD_RecalculateValues";
 
 	int ret;
 
 	// Update variables
-	ret = Excel12(xlUDF, &xResult, 4, &funcName, &xOpMulti, &xOpSol, &xOpFeas);
+	ret = Excel12f(xlUDF, &xResult, 4, TempStr12(L"OpenSolver.NOMAD_UpdateVar"), &xOpMulti, &xOpSol, TempBool12(!feasibility));
 	if (ret == xlretAbort || ret == xlretUncalced) {
+		Excel12f(xlFree,0,1,&xResult);
 		throw "NOMAD_UpdateVar failed";
 	}
 
 	// Recalculate values
-	ret = Excel12(xlUDF, 0,1,&funcName2);
+	ret = Excel12f(xlUDF, 0, 1, TempStr12(L"OpenSolver.NOMAD_RecalculateValues"));
 	if (ret == xlretAbort || ret == xlretUncalced) {
-		throw "NOMAD_GetValues failed";
+		Excel12f(xlFree,0,1,&xResult);
+		throw "NOMAD_RecalculateValues failed";
 	}
 
 	// Get constraint values
-	ret = Excel12(xlUDF,&xResult,1,&funcName1);
+	ret = Excel12f(xlUDF, &xResult, 1, TempStr12(L"OpenSolver.NOMAD_GetValues"));
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti ||
 		xResult.val.array.rows * xResult.val.array.columns != (int)numCons) {
-		throw "NOMAD_RecalculateValues failed";
+		Excel12f(xlFree,0,1,&xResult);
+		throw "NOMAD_GetValues failed";
 	}
 	
 	for (unsigned short i=0;i<numCons;i++) {
@@ -523,7 +518,7 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 	}
 	
 	// Free memory allocated by Excel
-	Excel12(xlFree,0,1,&xResult);
+	Excel12f(xlFree,0,1,&xResult);
 	return;
 }
 
@@ -536,14 +531,11 @@ void EvaluateX(double *newVars, double size, double *newCons, double numCons)
 void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *type, double numVars)
 {
 	static XLOPER12 xResult;
-
-	XLOPER12 funcName;
-	funcName.val.str=L"\043OpenSolver.NOMAD_GetVariableData";
-	funcName.xltype=xltypeStr;
 	
-	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(L"OpenSolver.NOMAD_GetVariableData"));
 	if (ret == xlretAbort || ret == xlretUncalced || xResult.xltype != xltypeMulti || 
 		xResult.val.array.rows * xResult.val.array.columns != 4*(int)numVars) {
+		Excel12f(xlFree,0,1,&xResult);
 		throw "NOMAD_GetVariableData failed";
 	}
 
@@ -563,6 +555,8 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 	//get the variable types (real,integer,binary)
 	for ( int i=0;i<numVars;i++)
 		*(type+i)=(int)xResult.val.array.lparray[3*(int)numVars+i].val.num;
+
+	Excel12f(xlFree,0,1,&xResult);
 	return;
 }
 
@@ -573,12 +567,10 @@ void GetVariableData(double *LowerBounds, double *UpperBounds, double *X0, int *
 void GetOptionData(NOMAD::Parameters *p)
 {
 	static XLOPER12 xResult;
-	XLOPER12 funcName;
-	funcName.val.str=L"\041OpenSolver.NOMAD_GetOptionData";
-	funcName.xltype=xltypeStr;
 	
-	int ret = Excel12(xlUDF,&xResult,1,&funcName);
+	int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(L"OpenSolver.NOMAD_GetOptionData"));
 	if (ret == xlretAbort || ret == xlretUncalced) {
+		Excel12f(xlFree,0,1,&xResult);
 		throw "NOMAD_GetOptionData failed";
 	}
 
@@ -612,5 +604,7 @@ void GetOptionData(NOMAD::Parameters *p)
 
 	// Read all the new entries into p
 	p->read(entries);  
+
+	Excel12f(xlFree,0,1,&xResult);
 	return;
 }
