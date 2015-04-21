@@ -30,7 +30,15 @@ The output of this solution is: `OpenSolverNomadDll.dll` and `OpenSolverDll64.dl
         !endif
         ```
 	  
-  2. Change the `CPPFLAGS` lines to use `/MTd` and `/MT` for the `DEBUG` and `RELEASE` configurations respectively.
+  2. Change the `CPPFLAGS` lines to use `/MTd` and `/MT` for the `DEBUG` and `RELEASE` configurations respectively:
+        
+        ```make
+        !if "$(TYPE)" == "DEBUG"
+        CPPFLAGS        =/Od /W3 /WX /EHsc /Zi /MTd /Fd"$(FRAMEWORK_PDB)" /Fo"$(FRAMEWORKBUILDDIR)\\"
+        !else
+        CPPFLAGS        =/W3 /WX /EHsc /MT /Fo"$(FRAMEWORKBUILDDIR)\\"
+        !endif
+        ```
 
 You also need access to the NOMAD header files. The project assumes that this repository and [OpenSolverNomadLib](https://github.com/OpenSolver/OpenSolverNomadLib) are in the same root directory, and is configured to search for the header files under this assumption. If you change the relative location of the repositories the project will need to be updated to reflect this.
 
