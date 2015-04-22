@@ -13,7 +13,18 @@
 #include <string>
 #include <vector>
 
+namespace OPENSOLVER {
+
 const char DLL_VERSION[] = "1.1.0";
+
+// Should match the definition in VariableType enum in OpenSolverConsts module
+enum VARTYPE {
+	CONTINUOUS = 0,
+	INTEGER = 1,
+	BINARY = 2
+};
+
+}  // OPENSOLVER
 
 void GetNumConstraints(int* numCons, int* nObj);
 int GetNumVariables(void);
@@ -97,7 +108,7 @@ extern "C" BSTR _stdcall NomadVersion() {
 }
 
 extern "C" BSTR _stdcall NomadDLLVersion() {
-  return CComBSTR(DLL_VERSION);
+  return CComBSTR(OPENSOLVER::DLL_VERSION);
 }
 
 NOMAD::Mads *mads;
@@ -176,13 +187,13 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     vector<NOMAD::bb_input_type> bbit(n);
     for (int i = 0; i < n; ++i) {
       switch (varType[i]) {
-        case 1:
+	      case OPENSOLVER::CONTINUOUS:
           bbit[i] = NOMAD::CONTINUOUS;
           break;
-        case 2:
+        case OPENSOLVER::INTEGER:
           bbit[i] = NOMAD::INTEGER;
           break;
-        case 3:
+        case OPENSOLVER::BINARY:
           bbit[i] = NOMAD::BINARY;
           break;
       }
