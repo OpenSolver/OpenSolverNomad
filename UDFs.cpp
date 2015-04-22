@@ -157,7 +157,6 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     double * const UpperBounds = new double[n];
     double * const startingPoint = new double[n];
     int * const varType = new int[n];
-    bool * const setBinaryBounds = new bool[n];
 
     GetVariableData(LowerBounds, UpperBounds, startingPoint, varType, n);
 
@@ -176,31 +175,16 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     // Definition of input types:
     vector<NOMAD::bb_input_type> bbit(n);
     for (int i = 0; i < n; ++i) {
-      if (!SolveRelaxation) {
-        switch (varType[i]) {
-          case 1:
-            bbit[i] = NOMAD::CONTINUOUS;
-            break;
-          case 2:
-            bbit[i] = NOMAD::INTEGER;
-            break;
-          case 3:
-            bbit[i] = NOMAD::BINARY;
-            break;
-        }
-        setBinaryBounds[i] = false;
-      } else {
-        // If solving a relaxation make all variables continuous
-        bbit[i] = NOMAD::CONTINUOUS;
-        switch (varType[i]) {
-          case 1:
-          case 2:
-            setBinaryBounds[i] = false;
-            break;
-          case 3:
-            setBinaryBounds[i] = true;
-            break;
-        }
+      switch (varType[i]) {
+        case 1:
+          bbit[i] = NOMAD::CONTINUOUS;
+          break;
+        case 2:
+          bbit[i] = NOMAD::INTEGER;
+          break;
+        case 3:
+          bbit[i] = NOMAD::BINARY;
+          break;
       }
     }
     p.set_BB_INPUT_TYPE(bbit);
@@ -210,16 +194,9 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     NOMAD::Point ub(n);
     NOMAD::Point lb(n);
     for (int i = 0; i < n; i++) {
-      if (!setBinaryBounds[i]) {
-        ub[i] = UpperBounds[i];
-        lb[i] = LowerBounds[i];
-        x0[i] = startingPoint[i];
-      } else {
-        // If solving relaxation make bounds between 0 and 1
-        ub[i] = 1;
-        lb[i] = 0;
-        x0[i] = 0;
-      }
+      ub[i] = UpperBounds[i];
+      lb[i] = LowerBounds[i];
+      x0[i] = startingPoint[i];
     }
     p.set_X0(x0);
     p.set_UPPER_BOUND(ub);
