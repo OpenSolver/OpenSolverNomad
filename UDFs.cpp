@@ -45,14 +45,15 @@ class Excel_Evaluator : public NOMAD::Evaluator {
   ~Excel_Evaluator(void) { delete [] _px; delete [] _fx; }
 
   // eval_x:
-  bool eval_x(NOMAD::Eval_Point & x, const NOMAD::Double & h_max,
-              bool & cnt_eval) const;
+  bool eval_x(NOMAD::Eval_Point& x,
+              const NOMAD::Double& h_max,
+              bool& count_eval) const;
 };
 
 // eval_x:
-bool Excel_Evaluator::eval_x(NOMAD::Eval_Point & x,
-                             const NOMAD::Double & h_max,
-                             bool & cnt_eval) const {
+bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
+                             const NOMAD::Double& h_max,
+                             bool& count_eval) const {
   for (int i = 0; i < _n; ++i) {
       _px[i] = x[i].value();
   }
@@ -60,7 +61,7 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point & x,
   for (int i = 0; i < _m; ++i) {
       x.set_bb_output(i, _fx[i]);
   }
-  cnt_eval = true;
+  count_eval = true;
   return true;
 }
 
