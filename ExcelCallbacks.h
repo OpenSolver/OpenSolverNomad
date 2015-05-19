@@ -9,12 +9,33 @@
 
 namespace OPENSOLVER {
 
+// Names of macros in Excel that we will need to call
+const char GET_LOG_FILE_PATH_NAME[] =   "OpenSolver.NOMAD_GetLogFilePath";
+const char GET_NUM_CONSTRAINTS_NAME[] = "OpenSolver.NOMAD_GetNumConstraints";
+const char GET_NUM_VARIABLES_NAME[] =   "OpenSolver.NOMAD_GetNumVariables";
+const char GET_VARIABLE_DATA_NAME[] =   "OpenSolver.NOMAD_GetVariableData";
+const char GET_OPTION_DATA_NAME[] =     "OpenSolver.NOMAD_GetOptionData";
+const char SHOW_CANCEL_DIALOG_NAME[] =  "OpenSolver.NOMAD_ShowCancelDialog";
+const char UPDATE_VAR_NAME[] =          "OpenSolver.NOMAD_UpdateVar";
+const char RECALCULATE_VALUES_NAME[] =  "OpenSolver.NOMAD_RecalculateValues";
+const char GET_VALUES_NAME[] =          "OpenSolver.NOMAD_GetValues";
+
+// Exception indicating a call into Excel failed
+struct FailedCallException : std::exception {
+  std::string s;
+  explicit FailedCallException(std::string failedFunctionName) {
+    s = failedFunctionName + " failed";
+  }
+  ~FailedCallException() throw() {}
+  const char* what() const throw() { return s.c_str(); }
+};
+
 /**
  * Gets the path to the log file from Excel
  *
- * @return The full path to the log file
+ * @param logPath String to store the full path to the log file
  */
-std::string GetLogFilePath();
+void GetLogFilePath(std::string* logPath);
 
 /**
  * Gets number of constraints and objectives from Excel.
@@ -27,9 +48,9 @@ void GetNumConstraints(int* numCons, int* numObjs);
 /**
  * Gets number of variables from Excel.
  *
- * @return The number of variables in the model
+ * @param numVars Set to the number of variables in the model
  */
-int GetNumVariables(void);
+void GetNumVariables(int* numVars);
 
 /**
  * Gets information about the variables from Excel
@@ -47,9 +68,33 @@ void GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
  * Gets solver parameters for NOMAD from Excel
  *
  * @param paramStrings Pointer to array to store parameter strings from Excel
- * @return The number of parameter strings
+ * @param numOptions Set to the number of parameter strings
  */
-int GetOptionData(std::string **paramStrings);
+void GetOptionData(std::string **paramStrings, int* numOptions);
+
+/**
+ * Sets new values of variables in Excel
+ *
+ * @param newValues Array of new variable values to set
+ * @param numVars The number of variables in the model
+ * @param bestSolution Pointer to current best solution (NULL if no solution)
+ * @param feasibility True if current best solution is feasible
+ */ 
+void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+                bool feasibility);
+
+/**
+ * Forces a recalculate in Excel
+ */
+void RecalculateValues();
+
+/**
+ * Gets the new values for each constraint/objective from Excel
+ *
+ * @param numCons The number of constraints in the model
+ * @param newCons Array to store the new values of each constraint cell
+ */
+void GetConstraintValues(int numCons, double* newCons);
 
 /**
  * Conduct an evaluation iteration in Excel

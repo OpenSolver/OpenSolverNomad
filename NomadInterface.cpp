@@ -103,92 +103,81 @@ extern "C" BSTR _stdcall NomadDLLVersion() {
 // If Application.Run is used, the Excel12f calls will fail in 64-bit Office.
 // TODO: try to remove this unused bool, seems to crash Excel if we take it out
 int _stdcall NomadMain(bool /*SolveRelaxation*/) {
-  // Get a temp path to write parameters etc to
-  ofstream logFile(OPENSOLVER::GetLogFilePath(), ios::out);
+  std::string logFilePath;
+  try {
+    // Get a temp path to write parameters etc to
+    OPENSOLVER::GetLogFilePath(&logFilePath);
+  } catch (exception&) {
+    return OPENSOLVER::LOG_FILE_FAILED;
+  }
+
+  ofstream logFile(logFilePath, ios::out);
   NOMAD::Display out(logFile);
   out.precision(NOMAD::DISPLAY_PRECISION_STD);
 
   try {
-    // NOMAD initializations:
     NOMAD::begin(0, nullptr);
 
-    int n = OPENSOLVER::GetNumVariables();
+    // Variable information
+    int numVars;
+    OPENSOLVER::GetNumVariables(&numVars);
 
-    // If no variables are retrieved from Excel (due to an error or
-    // otherwise), we cannot proceed.
-    if (n < 1) {
-      throw "No variables returned";
+    if (numVars < 1) {
+      throw std::exception("No variables returned");
     }
 
-    double * const lowerBounds = new double[n];
-    double * const upperBounds = new double[n];
-    double * const startingPoint = new double[n];
-    int * const varTypes = new int[n];
+    double * const lowerBounds =   new double[numVars];
+    double * const upperBounds =   new double[numVars];
+    double * const startingPoint = new double[numVars];
+    int * const varTypes =         new int[numVars];
 
-    OPENSOLVER::GetVariableData(n, lowerBounds, upperBounds, startingPoint,
-                                varTypes);
-    for (int i = 0; i < n; ++i) {
+    OPENSOLVER::GetVariableData(numVars, lowerBounds, upperBounds,
+                                startingPoint, varTypes);
+    for (int i = 0; i < numVars; ++i) {
       if (upperBounds[i] >= 1e10) {
         upperBounds[i] = NOMAD::INF;
       }
     }
 
-    // Initialise m(number of Constraints) and n(number of objectives)
-    int m = 0;
-    int nobj = 1;
-    OPENSOLVER::GetNumConstraints(&m, &nobj);
-
-    // parameters creation:
-    // --------------------
-    NOMAD::Parameters p(out);
-
-    // Dimension:
-    p.set_DIMENSION(n);
-
-    // Definition of input types:
-    vector<NOMAD::bb_input_type> bbit(n);
-    for (int i = 0; i < n; i++) {
-      bbit[i] = OPENSOLVER::VarTypeToNomad(
-          static_cast<int>(OPENSOLVER::VarType(varTypes[i])));
-    }
-
-    p.set_BB_INPUT_TYPE(bbit);
-
-    // Set upper and lower bounds and starting position
-    NOMAD::Point x0(n);
-    NOMAD::Point ub(n);
-    NOMAD::Point lb(n);
-    for (int i = 0; i < n; i++) {
+    NOMAD::Point x0(numVars);
+    NOMAD::Point ub(numVars);
+    NOMAD::Point lb(numVars);
+    vector<NOMAD::bb_input_type> bbit(numVars);
+    for (int i = 0; i < numVars; i++) {
       ub[i] = upperBounds[i];
       lb[i] = lowerBounds[i];
       x0[i] = startingPoint[i];
+      bbit[i] = OPENSOLVER::VarTypeToNomad(varTypes[i]);
     }
-    p.set_X0(x0);
-    p.set_UPPER_BOUND(ub);
-    p.set_LOWER_BOUND(lb);
 
-    // definition of output types:
-    vector<NOMAD::bb_output_type> bbot(m);
-    for (int i = 0; i < nobj; i++) {
+    delete[] lowerBounds;
+    delete[] upperBounds;
+    delete[] startingPoint;
+    delete[] varTypes;
+
+    // Constraint/Objective info
+    int numCons;
+    int numObjs;
+    OPENSOLVER::GetNumConstraints(&numCons, &numObjs);
+
+    vector<NOMAD::bb_output_type> bbot(numCons);
+    for (int i = 0; i < numObjs; i++) {
       bbot[i] = NOMAD::OBJ;
     }
-    for (int i = nobj; i < m; ++i) {
+    for (int i = numObjs; i < numCons; ++i) {
       bbot[i] = NOMAD::EB;
     }
-    p.set_BB_OUTPUT_TYPE(bbot);
 
-    p.set_DISPLAY_STATS("bbe ( sol ) obj");
-
-    // Set user options
+    // User options
     string *paramStrings;
-    int numStrings = OPENSOLVER::GetOptionData(&paramStrings);
+    int numStrings;
+    OPENSOLVER::GetOptionData(&paramStrings, &numStrings);
 
-    // Parse parameter strings
     NOMAD::Parameter_Entries entries;
     NOMAD::Parameter_Entry *pe;
     string err;
+    bool invalid = false;
     for (int i = 0; i < numStrings; ++i) {
-      // Add the parameter to the entries
       pe = new NOMAD::Parameter_Entry(*(paramStrings + i));
       if (pe->is_ok()) {
         entries.insert(pe);  // pe will be deleted by ~Parameter_Entries()
@@ -196,33 +185,36 @@ int _stdcall NomadMain(bool /*SolveRelaxation*/) {
         if ((pe->get_name() != "" && pe->get_nb_values() == 0) ||
             pe->get_name() == "STATS_FILE") {
           err = "invalid parameter: " + pe->get_name();
-          delete pe;
-          throw err;
+          invalid = true;
         }
         delete pe;
+        if (invalid) {
+          throw std::exception(err.c_str());
+        }
       }
     }
     delete[] paramStrings;
 
+    // Set all parameters
+    NOMAD::Parameters p(out);
+    p.set_DIMENSION(numVars);
+    p.set_X0(x0);
+    p.set_UPPER_BOUND(ub);
+    p.set_LOWER_BOUND(lb);
+    p.set_BB_INPUT_TYPE(bbit);
+    p.set_BB_OUTPUT_TYPE(bbot);
+    p.set_DISPLAY_STATS("bbe ( sol ) obj");
     p.read(entries);
 
-    // parameters check:
     p.check();
 
-    // display parameters:
+    // Display parameters:
     out << p << endl;
 
-    // Nomad vars
-    NOMAD::stop_type stopflag;
-
-    // ========Running Nomad with Single Objective=========================
-    // custom evaluator creation:
-    Excel_Evaluator ev(p, n, m);
-    // algorithm creation and execution:
+    // Run NOMAD
+    Excel_Evaluator ev(p, numVars, numCons);
     mads = new NOMAD::Mads (p, &ev);
-    stopflag = mads->run();
-
-    // End nomad run
+    NOMAD::stop_type stopflag = mads->run();
     NOMAD::Slave::stop_slaves(out);
     NOMAD::end();
 
@@ -235,13 +227,13 @@ int _stdcall NomadMain(bool /*SolveRelaxation*/) {
       feasibility = false;
     }
     if (bestSol != nullptr) {
-      double * const fx = new double[m];
-      double * const px = new double[n];
-      for (int i = 0; i < n; ++i) {
-        px[i] = (*bestSol)[i].value();
+      double * const finalVars = new double[numVars];
+      for (int i = 0; i < numVars; ++i) {
+        finalVars[i] = (*bestSol)[i].value();
       }
       const double bestPoint = bestSol->get_f().value();
-      OPENSOLVER::EvaluateX(px, n, m, &bestPoint, feasibility, fx);
+      OPENSOLVER::UpdateVars(finalVars, numVars, &bestPoint, feasibility);
+      delete[] finalVars;
     }
 
     // Check if it reached the bounds of time and iterations
