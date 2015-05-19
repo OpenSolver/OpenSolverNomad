@@ -12,6 +12,24 @@
 
 namespace OPENSOLVER {
 
+std::string GetLogFilePath() {
+  static XLOPER12 xResult;
+
+  int ret = Excel12f(xlUDF, &xResult, 1,
+                     TempStr12(L"OpenSolver.NOMAD_GetLogFilePath"));
+  if (ret == xlretAbort || ret == xlretUncalced ||
+      xResult.xltype != xltypeStr) {
+    Excel12f(xlFree, nullptr, 1, &xResult);
+    throw "NOMAD_GetLogFilePath failed";
+  }
+  std::wstring ws = std::wstring(xResult.val.str);
+
+  // Free up Excel-allocated array
+  Excel12f(xlFree, nullptr, 1, &xResult);
+
+  return std::string(ws.begin(), ws.end()).substr(1);
+}
+
 void GetNumConstraints(int* numCons, int* numObjs) {
   static XLOPER12 xResult;
 

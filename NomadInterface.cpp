@@ -104,38 +104,8 @@ extern "C" BSTR _stdcall NomadDLLVersion() {
 // TODO: try to remove this unused bool, seems to crash Excel if we take it out
 int _stdcall NomadMain(bool /*SolveRelaxation*/) {
   // Get a temp path to write parameters etc to
-  DWORD dwRetVal = 0;
-  UINT uRetVal   = 0;
-  TCHAR lpTempPathBuffer[MAX_PATH];
-  TCHAR szTempFileName[MAX_PATH];
-  dwRetVal = GetTempPath(MAX_PATH, lpTempPathBuffer);
-
-  // Generates a temporary file name.
-  uRetVal = GetTempFileName(lpTempPathBuffer, TEXT("log"), 1,
-                            szTempFileName);
-
-  // display:
-  ofstream myfile;
-  myfile.open(szTempFileName, ios::out);
-
-  /*===Need to try this- Added to work with Andres Sommerhoff's==============
-  =====changes to getTempFolder which gives the user the option==============
-  =====of changing their temp file through environment variables=============
-
-  //check whether there is a temp path specified by the user in 
-  //environment variables 
-  char * EnvTempPath;
-  EnvTempPath=getenv("OpenSolverTempPath");
-  if (EnvTempPath!=NULL) {
-      myfile.close();
-      string strPath;
-      strPath.append(EnvTempPath);
-      strPath.append("\\Nom1.tmp");
-      myfile.open(strPath, ios::out);
-  }
-  ===================================================================*/
-
-  NOMAD::Display out(myfile);
+  ofstream logFile(OPENSOLVER::GetLogFilePath(), ios::out);
+  NOMAD::Display out(logFile);
   out.precision(NOMAD::DISPLAY_PRECISION_STD);
 
   try {
@@ -286,7 +256,7 @@ int _stdcall NomadMain(bool /*SolveRelaxation*/) {
     delete mads;
 
     out << endl << endl << "NOMAD Solve Return Value: " << retval << endl;
-    myfile.close();
+    logFile.close();
 
     // Return values
     if (stopflag == NOMAD::CTRL_C) {
@@ -303,7 +273,7 @@ int _stdcall NomadMain(bool /*SolveRelaxation*/) {
     NOMAD::Slave::stop_slaves(out);
     NOMAD::end();
     out << e.what() << endl;
-    myfile.close();
+    logFile.close();
     return EXIT_FAILURE;
   }
 }

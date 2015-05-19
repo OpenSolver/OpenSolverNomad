@@ -10,6 +10,13 @@
 namespace OPENSOLVER {
 
 /**
+ * Gets the path to the log file from Excel
+ *
+ * @return The full path to the log file
+ */
+std::string GetLogFilePath();
+
+/**
  * Gets number of constraints and objectives from Excel.
  * 
  * @param numCons Set to the number of constraints (inc. objectives)
@@ -42,7 +49,7 @@ void GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
  * @param paramStrings Pointer to array to store parameter strings from Excel
  * @return The number of parameter strings
  */
-int GetOptionData(string **paramStrings);
+int GetOptionData(std::string **paramStrings);
 
 /**
  * Conduct an evaluation iteration in Excel
