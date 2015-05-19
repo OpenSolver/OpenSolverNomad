@@ -5,8 +5,7 @@
 #ifndef EXCELCALLBACKS_H_
 #define EXCELCALLBACKS_H_
 
-// TODO(jackdunnnz) remove this
-#include "nomad.hpp"
+#include <string>
 
 namespace OPENSOLVER {
 
@@ -40,9 +39,10 @@ void GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
 /**
  * Gets solver parameters for NOMAD from Excel
  *
- * @param p NOMAD parameters object to be updated with values from Excel
+ * @param paramStrings Pointer to array to store parameter strings from Excel
+ * @return The number of parameter strings
  */
-void GetOptionData(NOMAD::Parameters* p);
+int GetOptionData(string **paramStrings);
 
 /**
  * Conduct an evaluation iteration in Excel

@@ -4,7 +4,6 @@
 #ifndef NOMADINTERFACE_H_
 #define NOMADINTERFACE_H_
 
-#include "ExcelCallbacks.h"
 #include "nomad.hpp"
 
 namespace OPENSOLVER {

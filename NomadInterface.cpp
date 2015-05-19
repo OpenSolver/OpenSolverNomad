@@ -7,17 +7,18 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include <string>
 #include <vector>
 
 namespace OPENSOLVER {
 
 NOMAD::bb_input_type VarTypeToNomad(int varType) {
   switch (varType) {
-    case OPENSOLVER::CONTINUOUS:
+    case CONTINUOUS:
       return NOMAD::CONTINUOUS;
-    case OPENSOLVER::INTEGER:
+    case INTEGER:
       return NOMAD::INTEGER;
-    case OPENSOLVER::BINARY:
+    case BINARY:
       return NOMAD::BINARY;
     default:
       throw "Unknown variable type";
@@ -40,26 +41,23 @@ class Excel_Evaluator : public NOMAD::Evaluator {
   NOMAD::Mads* _mads;
 
  public:
-  // ctor:
-  Excel_Evaluator(const NOMAD::Parameters &p, int n, int m)
-      : NOMAD::Evaluator(p),
+  Excel_Evaluator(const NOMAD::Parameters &p, int n, int m) : Evaluator(p),
         _n(n),
         _m(m),
         _px(new double[_n]),
         _fx(new double[_m]) {}
 
-  // dtor:
-  ~Excel_Evaluator(void) { delete [] _px; delete [] _fx; _mads = NULL; }
+  ~Excel_Evaluator(void) { delete [] _px; delete [] _fx; _mads = nullptr; }
 
   // eval_x:
   bool eval_x(NOMAD::Eval_Point& x,
               const NOMAD::Double& h_max,
-              bool& count_eval) const;
+              bool& count_eval) const override;
 };
 
 // eval_x:
 bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
-                             const NOMAD::Double& h_max,
+                             const NOMAD::Double& /*h_max*/,
                              bool& count_eval) const {
   for (int i = 0; i < _n; ++i) {
       _px[i] = x[i].value();
@@ -68,13 +66,13 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   // Get current solution for status updating
   bool feasibility = true;
   const NOMAD::Eval_Point *bestPoint = mads->get_best_feasible();
-  double* bestSol = NULL;
-  if (bestPoint == NULL) {
+  double* bestSol = nullptr;
+  if (bestPoint == nullptr) {
     bestPoint = mads->get_best_infeasible();
     feasibility = false;
   }
 
-  if (bestPoint != NULL) {
+  if (bestPoint != nullptr) {
     double bestValue = bestPoint->get_f().value();
     bestSol = &bestValue;
   }
@@ -103,7 +101,8 @@ extern "C" BSTR _stdcall NomadDLLVersion() {
 // This function must be called directly within VBA using
 // retCode = NomadMain(SolveRelaxation).
 // If Application.Run is used, the Excel12f calls will fail in 64-bit Office.
-int _stdcall NomadMain(bool SolveRelaxation) {
+// TODO: try to remove this unused bool, seems to crash Excel if we take it out
+int _stdcall NomadMain(bool /*SolveRelaxation*/) {
   // Get a temp path to write parameters etc to
   DWORD dwRetVal = 0;
   UINT uRetVal   = 0;
@@ -141,7 +140,7 @@ int _stdcall NomadMain(bool SolveRelaxation) {
 
   try {
     // NOMAD initializations:
-    NOMAD::begin(0, NULL);
+    NOMAD::begin(0, nullptr);
 
     int n = OPENSOLVER::GetNumVariables();
 
@@ -158,6 +157,11 @@ int _stdcall NomadMain(bool SolveRelaxation) {
 
     OPENSOLVER::GetVariableData(n, lowerBounds, upperBounds, startingPoint,
                                 varTypes);
+    for (int i = 0; i < n; ++i) {
+      if (upperBounds[i] >= 1e10) {
+        upperBounds[i] = NOMAD::INF;
+      }
+    }
 
     // Initialise m(number of Constraints) and n(number of objectives)
     int m = 0;
@@ -205,8 +209,32 @@ int _stdcall NomadMain(bool SolveRelaxation) {
 
     p.set_DISPLAY_STATS("bbe ( sol ) obj");
 
-    // set user options
-    OPENSOLVER::GetOptionData(&p);
+    // Set user options
+    string *paramStrings;
+    int numStrings = OPENSOLVER::GetOptionData(&paramStrings);
+
+    // Parse parameter strings
+    NOMAD::Parameter_Entries entries;
+    NOMAD::Parameter_Entry *pe;
+    string err;
+    for (int i = 0; i < numStrings; ++i) {
+      // Add the parameter to the entries
+      pe = new NOMAD::Parameter_Entry(*(paramStrings + i));
+      if (pe->is_ok()) {
+        entries.insert(pe);  // pe will be deleted by ~Parameter_Entries()
+      } else {
+        if ((pe->get_name() != "" && pe->get_nb_values() == 0) ||
+            pe->get_name() == "STATS_FILE") {
+          err = "invalid parameter: " + pe->get_name();
+          delete pe;
+          throw err;
+        }
+        delete pe;
+      }
+    }
+    delete[] paramStrings;
+
+    p.read(entries);
 
     // parameters check:
     p.check();
@@ -231,12 +259,12 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     bool feasibility = true;
     // Obtain Solution
     const NOMAD::Eval_Point *bestSol = mads->get_best_feasible();
-    if (bestSol == NULL) {
+    if (bestSol == nullptr) {
       bestSol = mads->get_best_infeasible();
       // Manually mark infeasibility (there isn't an infeasible flag)
       feasibility = false;
     }
-    if (bestSol != NULL) {
+    if (bestSol != nullptr) {
       double * const fx = new double[m];
       double * const px = new double[n];
       for (int i = 0; i < n; ++i) {
@@ -262,18 +290,14 @@ int _stdcall NomadMain(bool SolveRelaxation) {
 
     // Return values
     if (stopflag == NOMAD::CTRL_C) {
-      return -3;
+      retval = -3;
     } else if ((retval != 0) & (!feasibility)) {
       retval = 4;
-      return retval;
     } else if (!feasibility) {
       retval = 10;
-      return retval;
-    } else if (retval != 0) {
-      return retval;
-    } else {
-      return EXIT_SUCCESS;
     }
+
+    return retval;
   }
   catch (exception& e) {
     NOMAD::Slave::stop_slaves(out);
@@ -282,7 +306,5 @@ int _stdcall NomadMain(bool SolveRelaxation) {
     myfile.close();
     return EXIT_FAILURE;
   }
-
-  return EXIT_SUCCESS;
 }
 
