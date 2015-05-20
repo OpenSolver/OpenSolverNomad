@@ -8,7 +8,7 @@
 
 namespace OPENSOLVER {
 
-const char DLL_VERSION[] = "1.1.1";
+const char DLL_VERSION[] = "1.1.2";
 const int LOG_FILE_FAILED = -12;
 
 // Should match the definition in VariableType enum in OpenSolverConsts module

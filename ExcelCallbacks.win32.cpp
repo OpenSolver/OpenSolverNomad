@@ -46,9 +46,19 @@ std::string XcharToString(const XCHAR* s) {
 }
 
 // Converts a string returned from Excel to std::string
-std::string GetStringFromExcel(const XCHAR* s) {
+// All strings need to be passed as a variant array with string then its length
+std::string GetStringFromExcel(const XLOPER12* stringData) {
+  // Get the length of the string
+  if (stringData[1].xltype != xltypeNum) {
+    throw std::exception("String length supplied by Excel not integer");
+  }
+  int n = static_cast<int>(stringData[1].val.num);
+
+  if (stringData[0].xltype != xltypeStr) {
+    throw std::exception("String data supplied was not a string type");
+  }
   // Excel puts garbage in the first char
-  return XcharToString(s).substr(1);
+  return XcharToString(stringData[0].val.str).substr(1, n);
 }
 
 // Creates a FailedCallException using the provided XCHAR message
@@ -101,9 +111,9 @@ void GetLogFilePath(std::string* logPath) {
   static XLOPER12 xResult;
   bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetLogFilePathName));
-  if (CheckReturnCodeOkay(ret) && xResult.xltype == xltypeStr) {
+  if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, 2)) {
     successful = true;
-    *logPath = GetStringFromExcel(xResult.val.str);
+    *logPath = GetStringFromExcel(xResult.val.array.lparray);
   }
 
   // Free up Excel-allocated array
@@ -206,12 +216,8 @@ void GetOptionData(std::string** paramStrings, int* numOptions) {
     *paramStrings = new std::string[*numOptions];
 
     for (int i = 0; i < *numOptions; ++i) {
-      // Get the length of the string
-      int n = static_cast<int>(xResult.val.array.lparray[2 * i + 1].val.num);
-
-      // Convert the string to std::string and cut it down to length
-      XCHAR* option = xResult.val.array.lparray[2 * i].val.str;
-      (*paramStrings)[i] = GetStringFromExcel(option).substr(0, n);
+      XLOPER12* stringData = xResult.val.array.lparray + 2 * i;
+      (*paramStrings)[i] = GetStringFromExcel(stringData);
     }
   }
 
