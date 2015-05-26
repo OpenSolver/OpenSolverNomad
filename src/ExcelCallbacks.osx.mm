@@ -46,40 +46,85 @@ NSAppleEventDescriptor* RunScriptFunction(NSString* functionName, NSAppleEventDe
   return result;
 }
 
-NSAppleEventDescriptor* GetArrayEntry(NSAppleEventDescriptor* array, NSInteger i, NSInteger j) {
-  return [[array descriptorAtIndex:i] descriptorAtIndex:j];
+NSAppleEventDescriptor* GetVectorEntry(NSAppleEventDescriptor* vector, NSInteger i) {
+  return [vector descriptorAtIndex:i];
+}
+
+NSAppleEventDescriptor* GetMatrixEntry(NSAppleEventDescriptor* matrix, NSInteger i, NSInteger j) {
+  return GetVectorEntry(GetVectorEntry(matrix, i), j);
+}
+
+double ConvertNSDataToDouble(NSData* data) {
+  double d;
+  assert([data length] == sizeof(d));
+  memcpy(&d, [data bytes], sizeof(d));
+  return d;
+}
+
+double ConvertDescriptorToDouble(NSAppleEventDescriptor* result) {
+  //TODO check type of descriptor
+  return ConvertNSDataToDouble([result data]);
+}
+
+int ConvertDescriptorToInt(NSAppleEventDescriptor* result) {
+  //TODO check type of descriptor
+  return [result int32Value];
+}
+
+std::string ConvertDescriptorToString(NSAppleEventDescriptor* result) {
+  // TODO error checking
+  assert([result numberOfItems] == 2);
+  // TODO type check
+  NSString *stringValue = [GetVectorEntry(result, 1) stringValue];
+  int stringLength = ConvertDescriptorToInt(GetVectorEntry(result, 2));
+
+  if (stringValue.length != stringLength) {
+    // Path returned didn't have the correct length
+    // TODO throw exception
+    stringValue = @"";
+  }
+  return std::string([stringValue UTF8String]);
 }
 
 extern "C" {
 
 void GetLogFilePath(std::string* logPath) {
   NSAppleEventDescriptor *result = RunScriptFunction(@"getLogFilePath", nil);
-  NSString *logFilePath = [GetArrayEntry(result, 1, 1) stringValue];
-  NSUInteger pathLength = [GetArrayEntry(result, 1, 2) int32Value];
-  
-  if (logFilePath.length != pathLength) {
-    // Path returned didn't have the correct length
-    // TODO throw exception
-    logFilePath = @"";
-  }
-  *logPath = std::string([logFilePath UTF8String]);
+  *logPath = ConvertDescriptorToString(GetVectorEntry(result, 1));
 }
 
 void GetNumConstraints(int* numCons, int* numObjs) {
-  
+  NSAppleEventDescriptor* result = RunScriptFunction(@"getNumConstraints", nil);
+  *numCons = ConvertDescriptorToInt(GetVectorEntry(result, 1));
+  *numObjs = ConvertDescriptorToInt(GetVectorEntry(result, 2));
 }
 
 void GetNumVariables(int* numVars) {
-  
+  NSAppleEventDescriptor* result = RunScriptFunction(@"getNumVariables", nil);
+  // TODO typecheck
+  *numVars = [result int32Value];
 }
 
 void GetVariableData(int numVars, double* lowerBounds, double* upperBounds, double* startingX,
                                 int* varTypes) {
-  
+  NSAppleEventDescriptor* result = RunScriptFunction(@"getVariableData", nil);
+  // TODO error handle
+  assert([result numberOfItems] == 4 * numVars);
+  for (int i = 0; i < numVars; ++i) {
+    lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * i + 1));
+    upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * i + 2));
+    startingX[i]   = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1));
+    varTypes[i]    = ConvertDescriptorToInt   (GetVectorEntry(result, 3 * numVars + i + 1));
+  }
 }
 
 void GetOptionData(std::string** paramStrings, int* numOptions) {
-  
+  NSAppleEventDescriptor* result = RunScriptFunction(@"getOptionData", nil);
+  *numOptions = (int)[result numberOfItems];
+  *paramStrings = new std::string[*numOptions];
+  for (int i = 0; i < *numOptions; ++i) {
+    (*paramStrings)[i] = ConvertDescriptorToString(GetVectorEntry(result, i + 1));
+  }
 }
 
 void UpdateVars(double* newVars, int numVars, const double* bestSolution,
@@ -116,16 +161,25 @@ void UpdateVars(double* newVars, int numVars, const double* bestSolution,
 }
 
 void RecalculateValues() {
-  
+  RunScriptFunction(@"recalculateValues", nil);
 }
 
 void GetConstraintValues(int numCons, double* newCons) {
-  
+  NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
+
+  // TODO replace with throw
+  assert([result numberOfItems] == numCons);
+  for (int i = 0; i < numCons; ++i) {
+    newCons[i] = ConvertNSDataToDouble([GetMatrixEntry(result, i + 1, 1) data]);
+  }
 }
 
 void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolution,
                           bool feasibility, double* newCons) {
-  
+  // TODO see if we can detect an escape keypress?
+  UpdateVars(newVars, numVars, bestSolution, feasibility);
+  RecalculateValues();
+  GetConstraintValues(numCons, newCons);
 }
 
 }  // extern "C"

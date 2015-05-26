@@ -26,15 +26,34 @@ int main(int argc, const char * argv[]) {
       //error
     }
     
-    std::string logFilePath;
-    OPENSOLVER::GetLogFilePath(&logFilePath);
-    NSLog(@"%@", [NSString stringWithUTF8String:logFilePath.c_str()]);
-
-    double newVars[4] = { 2.5, 3.2, 4.0, 5.999 };
-    double bestSolution = 4.0;
-    OPENSOLVER::UpdateVars(newVars, 4, &bestSolution, true);
-
-    NSLog(@"Hello, World!");
+//    std::string logFilePath;
+//    OPENSOLVER::GetLogFilePath(&logFilePath);
+//    NSLog(@"%@", [NSString stringWithUTF8String:logFilePath.c_str()]);
+//
+//    double newVars[4] = { 2.5, 3.2, 4.0, 5.999 };
+//    double bestSolution = 4.0;
+//    OPENSOLVER::UpdateVars(newVars, 4, &bestSolution, true);
+//
+//    double newCons[10];
+//    int numCons = 5;
+//    OPENSOLVER::GetConstraintValues(numCons, newCons);
+//
+//    int numObjs;
+//    OPENSOLVER::GetNumConstraints(&numCons, &numObjs);
+//
+//    int numVars;
+//    OPENSOLVER::GetNumVariables(&numVars);
+//
+//    double* lowerBounds = new double[100];
+//    double* upperBounds = new double[100];
+//    double* startingX = new double[100];
+//    int* varTypes = new int[100];
+//    OPENSOLVER::GetVariableData(numVars, lowerBounds, upperBounds, startingX, varTypes);
+//
+//    std::string* params;
+//    int numStrings;
+//    OPENSOLVER::GetOptionData(&params, &numStrings);
+//    NSLog(@"Hello, World!");
+    return OPENSOLVER::RunNomad();
   }
-  return 0;
 }
