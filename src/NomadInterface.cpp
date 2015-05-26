@@ -3,6 +3,7 @@
 #include "NomadInterface.h"
 #include "ExcelCallbacks.h"
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -93,7 +94,7 @@ int RunNomad() {
     return OPENSOLVER::LOG_FILE_FAILED;
   }
 
-  ofstream logFile(logFilePath, ios::out);
+  ofstream logFile(logFilePath.c_str(), ios::out);
   NOMAD::Display out(logFile);
   out.precision(NOMAD::DISPLAY_PRECISION_STD);
 
@@ -105,7 +106,7 @@ int RunNomad() {
     OPENSOLVER::GetNumVariables(&numVars);
 
     if (numVars < 1) {
-      throw std::exception("No variables returned");
+      throw std::runtime_error("No variables returned");
     }
 
     double * const lowerBounds =   new double[numVars];
@@ -171,7 +172,7 @@ int RunNomad() {
         }
         delete pe;
         if (invalid) {
-          throw std::exception(err.c_str());
+          throw std::runtime_error(err.c_str());
         }
       }
     }

@@ -11,6 +11,7 @@
 		04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */ = {isa = PBXBuildFile; fileRef = 04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */; };
 		04482B951B14CB2500093A0E /* Main.osx.mm in Sources */ = {isa = PBXBuildFile; fileRef = 04482B921B14CB2500093A0E /* Main.osx.mm */; };
 		04482B981B14CB5900093A0E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04482B971B14CB5900093A0E /* Carbon.framework */; };
+		045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045F52861B14EEB20069494C /* NomadInterface.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -33,6 +34,8 @@
 		04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ExcelCallbacks.osx.mm; path = ../src/ExcelCallbacks.osx.mm; sourceTree = "<group>"; };
 		04482B921B14CB2500093A0E /* Main.osx.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Main.osx.mm; path = ../src/Main.osx.mm; sourceTree = "<group>"; };
 		04482B971B14CB5900093A0E /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		045F52861B14EEB20069494C /* NomadInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NomadInterface.cpp; path = ../src/NomadInterface.cpp; sourceTree = "<group>"; };
+		045F52871B14EEB20069494C /* NomadInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NomadInterface.h; path = ../src/NomadInterface.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +70,8 @@
 		04482B961B14CB3700093A0E /* src */ = {
 			isa = PBXGroup;
 			children = (
+				045F52861B14EEB20069494C /* NomadInterface.cpp */,
+				045F52871B14EEB20069494C /* NomadInterface.h */,
 				04482B8F1B14CB2500093A0E /* ExcelCallbacks.h */,
 				04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */,
 				04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */,
@@ -134,6 +139,7 @@
 				04482B951B14CB2500093A0E /* Main.osx.mm in Sources */,
 				04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */,
 				04482B931B14CB2500093A0E /* ExcelCallbacks.osx.applescript in Sources */,
+				045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,14 +226,36 @@
 		04482B8D1B14CAB800093A0E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LIBRARY = "libc++";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PROJECT_DIR}/../lib/osx",
+				);
+				OTHER_LDFLAGS = "-lnomad";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../../OpenSolverNomadLib/src";
 			};
 			name = Debug;
 		};
 		04482B8E1B14CAB800093A0E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LIBRARY = "libc++";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PROJECT_DIR}/../lib/osx",
+				);
+				OTHER_LDFLAGS = "-lnomad";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "${PROJECT_DIR}/../../OpenSolverNomadLib/src";
 			};
 			name = Release;
 		};

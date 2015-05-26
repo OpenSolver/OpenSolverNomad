@@ -50,7 +50,9 @@ NSAppleEventDescriptor* GetArrayEntry(NSAppleEventDescriptor* array, NSInteger i
   return [[array descriptorAtIndex:i] descriptorAtIndex:j];
 }
 
-extern "C" void GetLogFilePath(std::string* logPath) {
+extern "C" {
+
+void GetLogFilePath(std::string* logPath) {
   NSAppleEventDescriptor *result = RunScriptFunction(@"getLogFilePath", nil);
   NSString *logFilePath = [GetArrayEntry(result, 1, 1) stringValue];
   NSUInteger pathLength = [GetArrayEntry(result, 1, 2) int32Value];
@@ -63,7 +65,24 @@ extern "C" void GetLogFilePath(std::string* logPath) {
   *logPath = std::string([logFilePath UTF8String]);
 }
 
-extern "C" void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+void GetNumConstraints(int* numCons, int* numObjs) {
+  
+}
+
+void GetNumVariables(int* numVars) {
+  
+}
+
+void GetVariableData(int numVars, double* lowerBounds, double* upperBounds, double* startingX,
+                                int* varTypes) {
+  
+}
+
+void GetOptionData(std::string** paramStrings, int* numOptions) {
+  
+}
+
+void UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
   
   // Build array of new variables
@@ -95,3 +114,18 @@ extern "C" void UpdateVars(double* newVars, int numVars, const double* bestSolut
   
   RunScriptFunction(@"updateVars", params);
 }
+
+void RecalculateValues() {
+  
+}
+
+void GetConstraintValues(int numCons, double* newCons) {
+  
+}
+
+void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolution,
+                          bool feasibility, double* newCons) {
+  
+}
+
+}  // extern "C"

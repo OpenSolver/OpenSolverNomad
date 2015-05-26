@@ -32,12 +32,17 @@ struct FailedCallException : std::exception {
   const char* what() const throw() { return s.c_str(); }
 };
 
+// We need C-style names on OS X since we are implementing in Obj-C++
+#ifdef __APPLE__
+extern "C" {
+#endif
+
 /**
  * Gets the path to the log file from Excel
  *
  * @param logPath String to store the full path to the log file
  */
-extern "C" void GetLogFilePath(std::string* logPath);
+void GetLogFilePath(std::string* logPath);
 
 /**
  * Gets number of constraints and objectives from Excel.
@@ -82,7 +87,7 @@ void GetOptionData(std::string **paramStrings, int* numOptions);
  * @param bestSolution Pointer to current best solution (NULL if no solution)
  * @param feasibility True if current best solution is feasible
  */
-extern "C" void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+void UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility);
 
 /**
@@ -112,6 +117,10 @@ void GetConstraintValues(int numCons, double* newCons);
  */
 void EvaluateX(double* newVars, int numVars, int numCons,
                const double* bestSolution, bool feasibility, double* newCons);
+  
+#ifdef __APPLE__
+}  // extern "C"
+#endif
 
 }  // namespace OPENSOLVER
 
