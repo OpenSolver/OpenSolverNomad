@@ -2,8 +2,8 @@
 // Functions for NOMAD library to interface with Excel
 // Implemented per-platform
 
-#ifndef EXCELCALLBACKS_H_
-#define EXCELCALLBACKS_H_
+#ifndef SRC_EXCELCALLBACKS_H_
+#define SRC_EXCELCALLBACKS_H_
 
 #include <string>
 
@@ -113,4 +113,4 @@ void EvaluateX(double* newVars, int numVars, int numCons,
 
 }  // namespace OPENSOLVER
 
-#endif  // EXCELCALLBACKS_H_
+#endif  // SRC_EXCELCALLBACKS_H_

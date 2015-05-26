@@ -1,8 +1,8 @@
 // NomadInterface.h
 // Runs NOMAD solver on OpenSolver problem
 
-#ifndef NOMADINTERFACE_H_
-#define NOMADINTERFACE_H_
+#ifndef SRC_NOMADINTERFACE_H_
+#define SRC_NOMADINTERFACE_H_
 
 #include "nomad.hpp"
 
@@ -25,4 +25,4 @@ NOMAD::bb_input_type VarTypeToNomad(int varType);
 
 }  // namespace OPENSOLVER
 
-#endif  // NOMADINTERFACE_H_
+#endif  // SRC_NOMADINTERFACE_H_
