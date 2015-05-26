@@ -21,7 +21,7 @@
     <ClCompile Include="..\src\NomadInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Main.win32.cpp">
+    <ClCompile Include="..\src\Main.win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
