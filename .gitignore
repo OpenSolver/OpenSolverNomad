@@ -1,6 +1,6 @@
 ### OpenSolver Specific
-Excel2010XLLSDK/*
-!Excel2010XLLSDK/README.md
+vendor/Excel2010XLLSDK/*
+!vendor/Excel2010XLLSDK/README.md
 
 # Created by http://www.gitignore.io
 

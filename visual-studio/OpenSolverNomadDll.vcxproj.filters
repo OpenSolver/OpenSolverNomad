@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ExcelCallbacks.win32.cpp">
+    <ClCompile Include="..\src\ExcelCallbacks.win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NomadInterface.cpp">
+    <ClCompile Include="..\src\NomadInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -28,10 +28,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="NomadInterface.h">
+    <ClInclude Include="..\src\ExcelCallbacks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExcelCallbacks.h">
+    <ClInclude Include="..\src\NomadInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
