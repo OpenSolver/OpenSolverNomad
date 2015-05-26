@@ -97,7 +97,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)\..\..\OpenSolver\Solvers\win64\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)\..\..\OpenSolver\Solvers\win32\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -113,7 +113,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB\x64;$(SolutionDir)\..\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB\x64;$(SolutionDir)\..\lib\win64;$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>frmwrk32d.lib;xlcall32.lib;libnomad-debug.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
@@ -143,7 +143,7 @@
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)\..\..\OpenSolver\Solvers\win64\" /y</Command>
+      <Command>xcopy "$(TargetDir)*.dll" "$(SolutionDir)\..\..\OpenSolver\Solvers\win32\" /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -163,7 +163,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB\x64;$(SolutionDir)\..\lib\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB\x64;$(SolutionDir)\..\lib\win64;$(SolutionDir)\..\vendor\Excel2010XLLSDK\LIB;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>frmwrk32.lib;xlcall32.lib;libnomad.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectName).def</ModuleDefinitionFile>
     </Link>

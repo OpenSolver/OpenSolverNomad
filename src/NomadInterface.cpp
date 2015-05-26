@@ -102,7 +102,7 @@ extern "C" BSTR _stdcall NomadDLLVersion() {
 // retCode = NomadMain(SolveRelaxation).
 // If Application.Run is used, the Excel12f calls will fail in 64-bit Office.
 // TODO: try to remove this unused bool, seems to crash Excel if we take it out
-int _stdcall NomadMain(bool /*SolveRelaxation*/) {
+extern "C" int _stdcall NomadMain(bool) {
   std::string logFilePath;
   try {
     // Get a temp path to write parameters etc to
