@@ -1,6 +1,8 @@
 // ExcelCallbacks.h
 // Functions for NOMAD library to interface with Excel
 // Implemented per-platform
+// All functions should be C-style to avoid mangling issues on OS X:
+// http://www.drdobbs.com/cpp/problems-when-linking-objective-c-and-c/240166238
 
 #ifndef SRC_EXCELCALLBACKS_H_
 #define SRC_EXCELCALLBACKS_H_
@@ -35,11 +37,11 @@ struct FailedCallException : std::exception {
  *
  * @param logPath String to store the full path to the log file
  */
-void GetLogFilePath(std::string* logPath);
+extern "C" void GetLogFilePath(std::string* logPath);
 
 /**
  * Gets number of constraints and objectives from Excel.
- * 
+ *
  * @param numCons Set to the number of constraints (inc. objectives)
  * @param numObjs Set to the number of objectives
  */
@@ -79,8 +81,8 @@ void GetOptionData(std::string **paramStrings, int* numOptions);
  * @param numVars The number of variables in the model
  * @param bestSolution Pointer to current best solution (NULL if no solution)
  * @param feasibility True if current best solution is feasible
- */ 
-void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+ */
+extern "C" void UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility);
 
 /**
@@ -107,7 +109,7 @@ void GetConstraintValues(int numCons, double* newCons);
  * @param bestSolution Pointer to current best solution (NULL if no solution)
  * @param feasibility True if current best solution is feasible
  * @param newCons Array to store the new values of each constraint cell
- */ 
+ */
 void EvaluateX(double* newVars, int numVars, int numCons,
                const double* bestSolution, bool feasibility, double* newCons);
 
