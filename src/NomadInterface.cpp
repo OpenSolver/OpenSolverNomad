@@ -3,10 +3,6 @@
 #include "NomadInterface.h"
 #include "ExcelCallbacks.h"
 
-#include <atlbase.h>
-#include <stdio.h>
-#include <windows.h>
-
 #include <string>
 #include <vector>
 
@@ -24,8 +20,6 @@ NOMAD::bb_input_type VarTypeToNomad(int varType) {
       throw "Unknown variable type";
   }
 }
-
-}  // namespace OPENSOLVER
 
 NOMAD::Mads *mads;
 
@@ -90,19 +84,7 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   return true;
 }
 
-extern "C" BSTR _stdcall NomadVersion() {
-  return CComBSTR(NOMAD::VERSION.c_str());
-}
-
-extern "C" BSTR _stdcall NomadDLLVersion() {
-  return CComBSTR(OPENSOLVER::DLL_VERSION);
-}
-
-// This function must be called directly within VBA using
-// retCode = NomadMain(SolveRelaxation).
-// If Application.Run is used, the Excel12f calls will fail in 64-bit Office.
-// TODO: try to remove this unused bool, seems to crash Excel if we take it out
-extern "C" int _stdcall NomadMain(bool) {
+int RunNomad() {
   std::string logFilePath;
   try {
     // Get a temp path to write parameters etc to
@@ -270,3 +252,4 @@ extern "C" int _stdcall NomadMain(bool) {
   }
 }
 
+}  // namespace OPENSOLVER

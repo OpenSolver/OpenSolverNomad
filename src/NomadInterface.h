@@ -8,7 +8,7 @@
 
 namespace OPENSOLVER {
 
-const char DLL_VERSION[] = "1.1.2";
+const char VERSION[] = "1.1.2";
 const int LOG_FILE_FAILED = -12;
 
 // Should match the definition in VariableType enum in OpenSolverConsts module
@@ -17,6 +17,11 @@ enum VarType {
   INTEGER = 1,
   BINARY = 2
 };
+
+/**
+ * Runs entire NOMAD process
+ */
+int RunNomad();
 
 /**
  * Converts an OpenSolver variable type to the corresponding NOMAD var type.
