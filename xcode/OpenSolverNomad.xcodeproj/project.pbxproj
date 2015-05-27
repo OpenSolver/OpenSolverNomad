@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		04482B931B14CB2500093A0E /* ExcelCallbacks.osx.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */; };
 		04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */ = {isa = PBXBuildFile; fileRef = 04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */; };
-		04482B951B14CB2500093A0E /* Main.osx.mm in Sources */ = {isa = PBXBuildFile; fileRef = 04482B921B14CB2500093A0E /* Main.osx.mm */; };
+		04482B951B14CB2500093A0E /* Main.osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 04482B921B14CB2500093A0E /* Main.osx.cpp */; };
 		04482B981B14CB5900093A0E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04482B971B14CB5900093A0E /* Carbon.framework */; };
 		045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045F52861B14EEB20069494C /* NomadInterface.cpp */; };
 /* End PBXBuildFile section */
@@ -32,7 +32,7 @@
 		04482B8F1B14CB2500093A0E /* ExcelCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExcelCallbacks.h; path = ../src/ExcelCallbacks.h; sourceTree = "<group>"; };
 		04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; name = ExcelCallbacks.osx.applescript; path = ../src/ExcelCallbacks.osx.applescript; sourceTree = "<group>"; };
 		04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ExcelCallbacks.osx.mm; path = ../src/ExcelCallbacks.osx.mm; sourceTree = "<group>"; };
-		04482B921B14CB2500093A0E /* Main.osx.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Main.osx.mm; path = ../src/Main.osx.mm; sourceTree = "<group>"; };
+		04482B921B14CB2500093A0E /* Main.osx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Main.osx.cpp; path = ../src/Main.osx.cpp; sourceTree = "<group>"; };
 		04482B971B14CB5900093A0E /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		045F52861B14EEB20069494C /* NomadInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NomadInterface.cpp; path = ../src/NomadInterface.cpp; sourceTree = "<group>"; };
 		045F52871B14EEB20069494C /* NomadInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NomadInterface.h; path = ../src/NomadInterface.h; sourceTree = "<group>"; };
@@ -75,7 +75,7 @@
 				04482B8F1B14CB2500093A0E /* ExcelCallbacks.h */,
 				04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */,
 				04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */,
-				04482B921B14CB2500093A0E /* Main.osx.mm */,
+				04482B921B14CB2500093A0E /* Main.osx.cpp */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -136,7 +136,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				04482B951B14CB2500093A0E /* Main.osx.mm in Sources */,
+				04482B951B14CB2500093A0E /* Main.osx.cpp in Sources */,
 				04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */,
 				04482B931B14CB2500093A0E /* ExcelCallbacks.osx.applescript in Sources */,
 				045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */,
