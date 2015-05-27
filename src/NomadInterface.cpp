@@ -253,4 +253,12 @@ int RunNomad() {
   }
 }
 
+#ifdef __APPLE__
+int RunNomadAndLoadResult() {
+  int nomadRetVal = RunNomad();
+  OPENSOLVER::LoadResult(nomadRetVal);
+  return nomadRetVal;
+}
+#endif
+
 }  // namespace OPENSOLVER

@@ -23,6 +23,13 @@ enum VarType {
  */
 int RunNomad();
 
+#ifdef __APPLE__
+/**
+ * Runs entire NOMAD process and loads result into Excel
+ */
+int RunNomadAndLoadResult();
+#endif
+
 /**
  * Converts an OpenSolver variable type to the corresponding NOMAD var type.
  */

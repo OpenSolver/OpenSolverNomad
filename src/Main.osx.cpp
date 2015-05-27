@@ -19,5 +19,5 @@ int main(int argc, const char * argv[]) {
   } else if (argc > 2) {
     //error
   }
-  return OPENSOLVER::RunNomad();
+  return OPENSOLVER::RunNomadAndLoadResult();
 }

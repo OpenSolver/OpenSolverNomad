@@ -117,6 +117,15 @@ void GetConstraintValues(int numCons, double* newCons);
  */
 void EvaluateX(double* newVars, int numVars, int numCons,
                const double* bestSolution, bool feasibility, double* newCons);
+
+#ifdef __APPLE__
+/**
+ * Load the NOMAD result into Excel (OS X-only)
+ *
+ * @param retVal The NOMAD return code
+ */
+void LoadResult(int retVal);
+#endif
   
 #ifdef __APPLE__
 }  // extern "C"

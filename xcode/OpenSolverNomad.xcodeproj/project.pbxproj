@@ -7,23 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		04482B931B14CB2500093A0E /* ExcelCallbacks.osx.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */; };
 		04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */ = {isa = PBXBuildFile; fileRef = 04482B911B14CB2500093A0E /* ExcelCallbacks.osx.mm */; };
 		04482B951B14CB2500093A0E /* Main.osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 04482B921B14CB2500093A0E /* Main.osx.cpp */; };
 		04482B981B14CB5900093A0E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04482B971B14CB5900093A0E /* Carbon.framework */; };
 		045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045F52861B14EEB20069494C /* NomadInterface.cpp */; };
+		0485E2431B166E6D00C82610 /* OpenSolverNomad in Copy Files */ = {isa = PBXBuildFile; fileRef = 04482B851B14CAB800093A0E /* OpenSolverNomad */; };
+		0485E2481B16713600C82610 /* ExcelCallbacks.osx.applescript in Sources */ = {isa = PBXBuildFile; fileRef = 04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		04482B831B14CAB800093A0E /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
+			buildActionMask = 12;
+			dstPath = "${PROJECT_DIR}/../../OpenSolver/Solvers/osx";
 			dstSubfolderSpec = 0;
 			files = (
+				0485E2431B166E6D00C82610 /* OpenSolverNomad in Copy Files */,
 			);
 			name = "Copy Files";
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -89,6 +91,7 @@
 			buildPhases = (
 				04482B811B14CAB800093A0E /* Sources */,
 				04482B821B14CAB800093A0E /* Frameworks */,
+				0485E2471B16704D00C82610 /* ShellScript */,
 				04482B831B14CAB800093A0E /* Copy Files */,
 			);
 			buildRules = (
@@ -131,14 +134,30 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0485E2471B16704D00C82610 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "osacompile -d -o \"${PROJECT_DIR}/../../OpenSolver/Solvers/osx/ExcelCallbacks.osx.scpt\" \"${PROJECT_DIR}/../src/ExcelCallbacks.osx.applescript\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		04482B811B14CAB800093A0E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0485E2481B16713600C82610 /* ExcelCallbacks.osx.applescript in Sources */,
 				04482B951B14CB2500093A0E /* Main.osx.cpp in Sources */,
 				04482B941B14CB2500093A0E /* ExcelCallbacks.osx.mm in Sources */,
-				04482B931B14CB2500093A0E /* ExcelCallbacks.osx.applescript in Sources */,
 				045F52881B14EEB20069494C /* NomadInterface.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

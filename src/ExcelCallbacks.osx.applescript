@@ -45,3 +45,9 @@ on getConstraintValues()
     return (run VB macro "OpenSolver.NOMAD_GetValues")
   end tell
 end getConstraintValues
+
+on loadResult(retVal)
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_LoadResult" arg1 retVal)
+  end tell
+end loadResult

@@ -167,11 +167,18 @@ void RecalculateValues() {
 void GetConstraintValues(int numCons, double* newCons) {
   NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
 
-  // TODO replace with throw
-  assert([result numberOfItems] == numCons);
-  for (int i = 0; i < numCons; ++i) {
-    newCons[i] = ConvertNSDataToDouble([GetMatrixEntry(result, i + 1, 1) data]);
+  if ([result numberOfItems] == numCons) {
+    for (int i = 0; i < numCons; ++i) {
+      newCons[i] = ConvertDescriptorToDouble(GetMatrixEntry(result, i + 1, 1));
+    }
+  } else {
+    // There aren't the full number of constraints
+    // Set all results to NaN
+    for (int i = 0; i < numCons; ++i) {
+      newCons[i] = std::numeric_limits<double>::quiet_NaN();
+    }
   }
+
 }
 
 void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolution,
@@ -180,6 +187,12 @@ void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolu
   UpdateVars(newVars, numVars, bestSolution, feasibility);
   RecalculateValues();
   GetConstraintValues(numCons, newCons);
+}
+
+void LoadResult(int retVal) {
+  NSAppleEventDescriptor *params = [NSAppleEventDescriptor listDescriptor];
+  [params insertDescriptor:[NSAppleEventDescriptor descriptorWithInt32:retVal] atIndex:1];
+  RunScriptFunction(@"loadResult", params);
 }
 
 }  // extern "C"
