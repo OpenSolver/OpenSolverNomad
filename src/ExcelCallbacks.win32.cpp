@@ -176,19 +176,10 @@ void GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
   if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, 4 * numVars)) {
     successful = true;
 
-    // Get the lower and upper bounds for each of the variables
     for (int i = 0; i < numVars; i++) {
-      lowerBounds[i] = xResult.val.array.lparray[2 * i].val.num;
-      upperBounds[i] = xResult.val.array.lparray[2 * i + 1].val.num;
-    }
-
-    // Get start point
-    for (int i = 0; i < numVars; i++) {
-      startingX[i] = xResult.val.array.lparray[2 * numVars + i].val.num;
-    }
-
-    // Get the variable types (real, integer, or binary)
-    for (int i = 0; i < numVars; i++) {
+      lowerBounds[i] = xResult.val.array.lparray[0 * numVars + i].val.num;
+      upperBounds[i] = xResult.val.array.lparray[1 * numVars + i].val.num;
+      startingX[i] =   xResult.val.array.lparray[2 * numVars + i].val.num;
       double rawType = xResult.val.array.lparray[3 * numVars + i].val.num;
       varTypes[i] = static_cast<int>(rawType);
     }

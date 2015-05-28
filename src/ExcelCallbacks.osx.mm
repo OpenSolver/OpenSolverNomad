@@ -111,8 +111,8 @@ void GetVariableData(int numVars, double* lowerBounds, double* upperBounds, doub
   // TODO error handle
   assert([result numberOfItems] == 4 * numVars);
   for (int i = 0; i < numVars; ++i) {
-    lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * i + 1));
-    upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * i + 2));
+    lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 0 * numVars + i + 1));
+    upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 1 * numVars + i + 1));
     startingX[i]   = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1));
     varTypes[i]    = ConvertDescriptorToInt   (GetVectorEntry(result, 3 * numVars + i + 1));
   }
