@@ -7,7 +7,6 @@
 
 int main(int argc, const char * argv[]) {
   if (argc == 2) {
-    
     const char* arg = argv[argc - 1];
     if (strcmp(arg, "-v") == 0) {
       printf(OPENSOLVER::VERSION);
@@ -17,7 +16,7 @@ int main(int argc, const char * argv[]) {
       return EXIT_SUCCESS;
     }
   } else if (argc > 2) {
-    //error
+    //TODO error
   }
   return OPENSOLVER::RunNomadAndLoadResult();
 }

@@ -89,93 +89,109 @@ std::string ConvertDescriptorToString(NSAppleEventDescriptor* result) {
 extern "C" {
 
 void GetLogFilePath(std::string* logPath) {
-  NSAppleEventDescriptor *result = RunScriptFunction(@"getLogFilePath", nil);
-  *logPath = ConvertDescriptorToString(GetVectorEntry(result, 1));
+  @autoreleasepool {
+    NSAppleEventDescriptor *result = RunScriptFunction(@"getLogFilePath", nil);
+    *logPath = ConvertDescriptorToString(GetVectorEntry(result, 1));
+  }
 }
 
 void GetNumConstraints(int* numCons, int* numObjs) {
-  NSAppleEventDescriptor* result = RunScriptFunction(@"getNumConstraints", nil);
-  *numCons = ConvertDescriptorToInt(GetVectorEntry(result, 1));
-  *numObjs = ConvertDescriptorToInt(GetVectorEntry(result, 2));
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getNumConstraints", nil);
+    *numCons = ConvertDescriptorToInt(GetVectorEntry(result, 1));
+    *numObjs = ConvertDescriptorToInt(GetVectorEntry(result, 2));
+  }
 }
 
 void GetNumVariables(int* numVars) {
-  NSAppleEventDescriptor* result = RunScriptFunction(@"getNumVariables", nil);
-  // TODO typecheck
-  *numVars = [result int32Value];
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getNumVariables", nil);
+    // TODO typecheck
+    *numVars = [result int32Value];
+  }
 }
 
 void GetVariableData(int numVars, double* lowerBounds, double* upperBounds, double* startingX,
                                 int* varTypes) {
-  NSAppleEventDescriptor* result = RunScriptFunction(@"getVariableData", nil);
-  // TODO error handle
-  assert([result numberOfItems] == 4 * numVars);
-  for (int i = 0; i < numVars; ++i) {
-    lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 0 * numVars + i + 1));
-    upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 1 * numVars + i + 1));
-    startingX[i]   = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1));
-    varTypes[i]    = ConvertDescriptorToInt   (GetVectorEntry(result, 3 * numVars + i + 1));
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getVariableData", nil);
+    // TODO error handle
+    assert([result numberOfItems] == 4 * numVars);
+    for (int i = 0; i < numVars; ++i) {
+      lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 0 * numVars + i + 1));
+      upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 1 * numVars + i + 1));
+      startingX[i]   = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1));
+      varTypes[i]    = ConvertDescriptorToInt   (GetVectorEntry(result, 3 * numVars + i + 1));
+    }
   }
 }
 
 void GetOptionData(std::string** paramStrings, int* numOptions) {
-  NSAppleEventDescriptor* result = RunScriptFunction(@"getOptionData", nil);
-  *numOptions = (int)[result numberOfItems];
-  *paramStrings = new std::string[*numOptions];
-  for (int i = 0; i < *numOptions; ++i) {
-    (*paramStrings)[i] = ConvertDescriptorToString(GetVectorEntry(result, i + 1));
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getOptionData", nil);
+    *numOptions = (int)[result numberOfItems];
+    *paramStrings = new std::string[*numOptions];
+    for (int i = 0; i < *numOptions; ++i) {
+      (*paramStrings)[i] = ConvertDescriptorToString(GetVectorEntry(result, i + 1));
+    }
   }
 }
 
 void UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
+  @autoreleasepool {
+
+    // Build array of new variables
+    NSAppleEventDescriptor *newVarsContainer = [NSAppleEventDescriptor listDescriptor];
+    for (int i = 0; i < numVars; ++i) {
+      NSAppleEventDescriptor *value =
+      [NSAppleEventDescriptor descriptorWithDescriptorType:'doub'
+                                                     bytes:newVars + i
+                                                    length:sizeof(double)];
+      NSAppleEventDescriptor *innerArray = [NSAppleEventDescriptor listDescriptor];
+      [innerArray insertDescriptor:value atIndex:1];
+      [newVarsContainer insertDescriptor:innerArray atIndex:(i + 1)];
+    }
   
-  // Build array of new variables
-  NSAppleEventDescriptor *newVarsContainer = [NSAppleEventDescriptor listDescriptor];
-  for (int i = 0; i < numVars; ++i) {
-    NSAppleEventDescriptor *value =
-    [NSAppleEventDescriptor descriptorWithDescriptorType:'doub'
-                                                   bytes:newVars + i
-                                                  length:sizeof(double)];
-    NSAppleEventDescriptor *innerArray = [NSAppleEventDescriptor listDescriptor];
-    [innerArray insertDescriptor:value atIndex:1];
-    [newVarsContainer insertDescriptor:innerArray atIndex:(i + 1)];
+    // Params
+    NSAppleEventDescriptor *params = [NSAppleEventDescriptor listDescriptor];
+    [params insertDescriptor:newVarsContainer atIndex:1];
+    NSAppleEventDescriptor *bestSolutionContainer;
+    if (bestSolution == nullptr) {
+      bestSolutionContainer = [NSAppleEventDescriptor nullDescriptor];
+    } else {
+      bestSolutionContainer = [NSAppleEventDescriptor descriptorWithDescriptorType:'doub'
+                                                                             bytes:bestSolution
+                                                                            length:sizeof(double)];
+    }
+    [params insertDescriptor:bestSolutionContainer atIndex:2];
+    [params insertDescriptor:[NSAppleEventDescriptor descriptorWithBoolean:!feasibility]
+                     atIndex:3];
+  
+    RunScriptFunction(@"updateVars", params);
   }
-  
-  // Params
-  NSAppleEventDescriptor *params = [NSAppleEventDescriptor listDescriptor];
-  [params insertDescriptor:newVarsContainer atIndex:1];
-  NSAppleEventDescriptor *bestSolutionContainer;
-  if (bestSolution == nullptr) {
-    bestSolutionContainer = [NSAppleEventDescriptor nullDescriptor];
-  } else {
-    bestSolutionContainer = [NSAppleEventDescriptor descriptorWithDescriptorType:'doub'
-                                                                           bytes:bestSolution
-                                                                          length:sizeof(double)];
-  }
-  [params insertDescriptor:bestSolutionContainer atIndex:2];
-  [params insertDescriptor:[NSAppleEventDescriptor descriptorWithBoolean:!feasibility]
-                   atIndex:3];
-  
-  RunScriptFunction(@"updateVars", params);
 }
 
 void RecalculateValues() {
-  RunScriptFunction(@"recalculateValues", nil);
+  @autoreleasepool {
+    RunScriptFunction(@"recalculateValues", nil);
+  }
 }
 
 void GetConstraintValues(int numCons, double* newCons) {
-  NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
 
-  if ([result numberOfItems] == numCons) {
-    for (int i = 0; i < numCons; ++i) {
-      newCons[i] = ConvertDescriptorToDouble(GetMatrixEntry(result, i + 1, 1));
-    }
-  } else {
-    // There aren't the full number of constraints
-    // Set all results to NaN
-    for (int i = 0; i < numCons; ++i) {
-      newCons[i] = std::numeric_limits<double>::quiet_NaN();
+    if ([result numberOfItems] == numCons) {
+      for (int i = 0; i < numCons; ++i) {
+        newCons[i] = ConvertDescriptorToDouble(GetMatrixEntry(result, i + 1, 1));
+      }
+    } else {
+      // There aren't the full number of constraints
+      // Set all results to NaN
+      for (int i = 0; i < numCons; ++i) {
+        newCons[i] = std::numeric_limits<double>::quiet_NaN();
+      }
     }
   }
 
@@ -190,9 +206,11 @@ void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolu
 }
 
 void LoadResult(int retVal) {
-  NSAppleEventDescriptor *params = [NSAppleEventDescriptor listDescriptor];
-  [params insertDescriptor:[NSAppleEventDescriptor descriptorWithInt32:retVal] atIndex:1];
-  RunScriptFunction(@"loadResult", params);
+  @autoreleasepool {
+    NSAppleEventDescriptor *params = [NSAppleEventDescriptor listDescriptor];
+    [params insertDescriptor:[NSAppleEventDescriptor descriptorWithInt32:retVal] atIndex:1];
+    RunScriptFunction(@"loadResult", params);
+  }
 }
 
 }  // extern "C"
