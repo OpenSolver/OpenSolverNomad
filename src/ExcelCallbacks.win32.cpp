@@ -20,7 +20,8 @@ const size_t WCHARBUF = 100;
 // Fills an XCHAR from char[] if the XCHAR is empty
 void ConvertToXcharIfNeeded(XCHAR* destination, const char* source) {
   if (wcslen(destination) == 0) {
-    auto destLength = mbstowcs(destination, source, WCHARBUF);
+    size_t destLength;
+    mbstowcs_s(&destLength, destination, WCHARBUF, source, WCHARBUF);
     if (destLength == -1) {
       std::string error = std::string("Error while converting") + source;
       throw std::exception(error.c_str());
