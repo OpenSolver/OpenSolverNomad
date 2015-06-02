@@ -8,26 +8,38 @@
 
 namespace OPENSOLVER {
 
-const char VERSION[] = "1.2.1";
-const int LOG_FILE_FAILED = -12;
+const char VERSION[] = "1.2.2";
 
-// Should match the definition in VariableType enum in OpenSolverConsts module
+// Should match the definition of VariableType enum in OpenSolverConsts module
 enum VarType {
   CONTINUOUS = 0,
   INTEGER = 1,
   BINARY = 2
 };
 
+// Should match the definition of NomadResult enum in SolverNomad module
+enum NomadResult {
+  LOG_FILE_ERROR = -12,
+  USER_CANCELLED = -3,
+  OPTIMAL = 0,
+  ERROR_OCCURED = 1,
+  SOLVE_STOPPED_ITER = 2,
+  SOLVE_STOPPED_TIME = 3,
+  INFEASIBLE = 4,
+  SOLVE_STOPPED_ITER_INF = 10,
+  SOLVE_STOPPED_TIME_INF = 11
+};
+
 /**
  * Runs entire NOMAD process
  */
-int RunNomad();
+NomadResult RunNomad();
 
 #ifdef __APPLE__
 /**
  * Runs entire NOMAD process and loads result into Excel
  */
-int RunNomadAndLoadResult();
+NomadResult RunNomadAndLoadResult();
 #endif
 
 /**

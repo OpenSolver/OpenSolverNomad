@@ -75,7 +75,7 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   if (p1_active) {
     feasibility = false;
   }
-  
+
   double* bestSol = nullptr;
   if (bestPoint != nullptr) {
     double bestValue = bestPoint->get_f().value();
@@ -95,13 +95,13 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   return true;
 }
 
-int RunNomad() {
+NomadResult RunNomad() {
   std::string logFilePath;
   try {
     // Get a temp path to write parameters etc to
     OPENSOLVER::GetLogFilePath(&logFilePath);
   } catch (exception&) {
-    return OPENSOLVER::LOG_FILE_FAILED;
+    return LOG_FILE_ERROR;
   }
 
   ofstream logFile(logFilePath.c_str(), ios::out);
@@ -229,12 +229,24 @@ int RunNomad() {
       delete[] finalVars;
     }
 
-    // Check if it reached the bounds of time and iterations
-    int retval = 0;
+    // Get return value
+    NomadResult retval = OPTIMAL;
     if (mads->get_stats().get_real_time() == p.get_max_time()) {
-      retval = 3;
+      retval = SOLVE_STOPPED_TIME;
     } else if (mads->get_stats().get_bb_eval() == p.get_max_bb_eval()) {
-      retval = 2;
+      retval = SOLVE_STOPPED_ITER;
+    } else if (stopflag == NOMAD::CTRL_C) {
+      retval = USER_CANCELLED;
+    }
+
+    if (!feasibility) {
+      if (retval == SOLVE_STOPPED_ITER) {
+        retval = SOLVE_STOPPED_ITER_INF;
+      } else if (retval == SOLVE_STOPPED_TIME) {
+        retval = SOLVE_STOPPED_TIME_INF;
+      } else {
+        retval = INFEASIBLE;
+      }
     }
 
     // Free Memory
@@ -242,16 +254,6 @@ int RunNomad() {
 
     out << endl << endl << "NOMAD Solve Return Value: " << retval << endl;
     logFile.close();
-
-    // Return values
-    if (stopflag == NOMAD::CTRL_C) {
-      retval = -3;
-    } else if ((retval != 0) & (!feasibility)) {
-      retval = 4;
-    } else if (!feasibility) {
-      retval = 10;
-    }
-
     return retval;
   }
   catch (exception& e) {
@@ -259,13 +261,13 @@ int RunNomad() {
     NOMAD::end();
     out << e.what() << endl;
     logFile.close();
-    return EXIT_FAILURE;
+    return ERROR_OCCURED;
   }
 }
 
 #ifdef __APPLE__
-int RunNomadAndLoadResult() {
-  int nomadRetVal = RunNomad();
+NomadResult RunNomadAndLoadResult() {
+  NomadResult nomadRetVal = RunNomad();
   OPENSOLVER::LoadResult(nomadRetVal);
   return nomadRetVal;
 }
