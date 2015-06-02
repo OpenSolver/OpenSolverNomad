@@ -61,12 +61,22 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   // Get current solution for status updating
   bool feasibility = true;
   const NOMAD::Eval_Point *bestPoint = mads->get_best_feasible();
-  double* bestSol = nullptr;
   if (bestPoint == nullptr) {
     bestPoint = mads->get_best_infeasible();
     feasibility = false;
   }
 
+  // Check if we are in phase 1
+  bool check_bimads = false;
+  bool reset_mesh = false;
+  bool reset_barriers = false;
+  bool p1_active = false;
+  mads->get_flags(check_bimads, reset_mesh, reset_barriers, p1_active);
+  if (p1_active) {
+    feasibility = false;
+  }
+  
+  double* bestSol = nullptr;
   if (bestPoint != nullptr) {
     double bestValue = bestPoint->get_f().value();
     bestSol = &bestValue;
