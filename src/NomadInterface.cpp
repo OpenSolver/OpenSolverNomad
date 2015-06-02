@@ -83,7 +83,7 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
   }
 
   try {
-    OPENSOLVER::EvaluateX(_px, _n, _m, bestSol, feasibility, _fx);
+    EvaluateX(_px, _n, _m, bestSol, feasibility, _fx);
   } catch (exception&) {
      mads->force_quit(0);
      return false;
@@ -99,7 +99,7 @@ NomadResult RunNomad() {
   std::string logFilePath;
   try {
     // Get a temp path to write parameters etc to
-    OPENSOLVER::GetLogFilePath(&logFilePath);
+    GetLogFilePath(&logFilePath);
   } catch (exception&) {
     return LOG_FILE_ERROR;
   }
@@ -113,7 +113,7 @@ NomadResult RunNomad() {
 
     // Variable information
     int numVars;
-    OPENSOLVER::GetNumVariables(&numVars);
+    GetNumVariables(&numVars);
 
     if (numVars < 1) {
       throw std::runtime_error("No variables returned");
@@ -124,8 +124,8 @@ NomadResult RunNomad() {
     double * const startingPoint = new double[numVars];
     int * const varTypes =         new int[numVars];
 
-    OPENSOLVER::GetVariableData(numVars, lowerBounds, upperBounds,
-                                startingPoint, varTypes);
+    GetVariableData(numVars, lowerBounds, upperBounds, startingPoint,
+                    varTypes);
     for (int i = 0; i < numVars; ++i) {
       if (upperBounds[i] >= 1e10) {
         upperBounds[i] = NOMAD::INF;
@@ -140,7 +140,7 @@ NomadResult RunNomad() {
       ub[i] = upperBounds[i];
       lb[i] = lowerBounds[i];
       x0[i] = startingPoint[i];
-      bbit[i] = OPENSOLVER::VarTypeToNomad(varTypes[i]);
+      bbit[i] = VarTypeToNomad(varTypes[i]);
     }
 
     delete[] lowerBounds;
@@ -151,7 +151,7 @@ NomadResult RunNomad() {
     // Constraint/Objective info
     int numCons;
     int numObjs;
-    OPENSOLVER::GetNumConstraints(&numCons, &numObjs);
+    GetNumConstraints(&numCons, &numObjs);
 
     vector<NOMAD::bb_output_type> bbot(numCons);
     for (int i = 0; i < numObjs; i++) {
@@ -164,7 +164,7 @@ NomadResult RunNomad() {
     // User options
     string *paramStrings;
     int numStrings;
-    OPENSOLVER::GetOptionData(&paramStrings, &numStrings);
+    GetOptionData(&paramStrings, &numStrings);
 
     NOMAD::Parameter_Entries entries;
     NOMAD::Parameter_Entry *pe;
@@ -225,7 +225,7 @@ NomadResult RunNomad() {
         finalVars[i] = (*bestSol)[i].value();
       }
       const double bestPoint = bestSol->get_f().value();
-      OPENSOLVER::UpdateVars(finalVars, numVars, &bestPoint, feasibility);
+      UpdateVars(finalVars, numVars, &bestPoint, feasibility);
       delete[] finalVars;
     }
 
@@ -268,7 +268,7 @@ NomadResult RunNomad() {
 #ifdef __APPLE__
 NomadResult RunNomadAndLoadResult() {
   NomadResult nomadRetVal = RunNomad();
-  OPENSOLVER::LoadResult(nomadRetVal);
+  LoadResult(nomadRetVal);
   return nomadRetVal;
 }
 #endif
