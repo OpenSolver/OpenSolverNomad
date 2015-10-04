@@ -30,6 +30,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		040CB7681BC0D14E00DC3684 /* OpenSolverNomad */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = OpenSolverNomad; path = DerivedData/OpenSolverNomad/Build/Products/Release/OpenSolverNomad; sourceTree = "<group>"; };
 		04482B851B14CAB800093A0E /* OpenSolverNomad */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OpenSolverNomad; sourceTree = BUILT_PRODUCTS_DIR; };
 		04482B8F1B14CB2500093A0E /* ExcelCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExcelCallbacks.h; path = ../src/ExcelCallbacks.h; sourceTree = "<group>"; };
 		04482B901B14CB2500093A0E /* ExcelCallbacks.osx.applescript */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.applescript; name = ExcelCallbacks.osx.applescript; path = ../src/ExcelCallbacks.osx.applescript; sourceTree = "<group>"; };
@@ -55,6 +56,7 @@
 		04482B7C1B14CAB800093A0E = {
 			isa = PBXGroup;
 			children = (
+				040CB7681BC0D14E00DC3684 /* OpenSolverNomad */,
 				04482B971B14CB5900093A0E /* Carbon.framework */,
 				04482B961B14CB3700093A0E /* src */,
 				04482B861B14CAB800093A0E /* Products */,
@@ -109,7 +111,7 @@
 		04482B7D1B14CAB800093A0E /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0630;
+				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = OpenSolver;
 				TargetAttributes = {
 					04482B841B14CAB800093A0E = {
@@ -185,6 +187,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -200,7 +203,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -236,7 +239,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 			};
