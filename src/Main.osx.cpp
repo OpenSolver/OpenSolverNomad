@@ -1,7 +1,7 @@
 // Main.osx.cpp
 // Main function for the final executable on OS X
 
-#include "NomadInterface.h"
+#include "NomadInterface.hpp"
 
 #include <string>
 

@@ -51,3 +51,9 @@ on loadResult(retVal)
     return (run VB macro "OpenSolver.NOMAD_LoadResult" arg1 retVal)
   end tell
 end loadResult
+
+on getConfirmedAbort()
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_GetConfirmedAbort")
+  end tell
+end getConfirmedAbort

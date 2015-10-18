@@ -172,6 +172,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\ExcelCallbacks.cpp" />
     <ClCompile Include="..\src\ExcelCallbacks.win32.cpp" />
     <ClCompile Include="..\src\Main.win32.cpp" />
     <ClCompile Include="..\src\NomadInterface.cpp" />
@@ -180,8 +181,8 @@
     <None Include="OpenSolverNomad.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ExcelCallbacks.h" />
-    <ClInclude Include="..\src\NomadInterface.h" />
+    <ClInclude Include="..\src\ExcelCallbacks.hpp" />
+    <ClInclude Include="..\src\NomadInterface.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

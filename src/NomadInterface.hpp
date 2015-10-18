@@ -8,7 +8,7 @@
 
 namespace OPENSOLVER {
 
-const char VERSION[] = "1.2.2";
+const char VERSION[] = "1.3.0";
 
 // Should match the definition of VariableType enum in OpenSolverConsts module
 enum VarType {

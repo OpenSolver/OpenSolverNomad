@@ -1,9 +1,11 @@
 // Main.win32.cpp
 // Functions that are exported in the Windows DLL
 
-#include "NomadInterface.h"
+#include "NomadInterface.hpp"
 
-#include <atlbase.h>
+// This needs to be below NomadInterface.hpp.
+// Including atlbase.h seems to break the NOMAD lib.
+#include <atlbase.h>  // NOLINT(build/include_order)
 
 extern "C" BSTR _stdcall NomadVersion() {
   return CComBSTR(NOMAD::VERSION.c_str());

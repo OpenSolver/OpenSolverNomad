@@ -24,6 +24,9 @@
     <ClCompile Include="..\src\Main.win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ExcelCallbacks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="OpenSolverNomad.def">
@@ -31,10 +34,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ExcelCallbacks.h">
+    <ClInclude Include="..\src\ExcelCallbacks.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\NomadInterface.h">
+    <ClInclude Include="..\src\NomadInterface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

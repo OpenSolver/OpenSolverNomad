@@ -1,11 +1,14 @@
-//  ExcelCallbacks.osx.mm
+// ExcelCallbacks.osx.mm
+// Implementation of ExcelCallbacks.hpp for OS X
 
-#include "ExcelCallbacks.h"
+#include "ExcelCallbacks.hpp"
 
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
 
 #include <string>
+
+namespace OPENSOLVER {
 
 NSAppleScript* GetCompiledScript() {
   static NSAppleScript* cachedScript;
@@ -28,22 +31,35 @@ NSAppleEventDescriptor* RunScriptFunction(NSString* functionName, NSAppleEventDe
   // Build Apple event to invoke user-defined handler in script
   // See http://appscript.sourceforge.net/nsapplescript.html
   NSAppleEventDescriptor *event;
-  event = [NSAppleEventDescriptor appleEventWithEventClass: kASAppleScriptSuite
-                                                   eventID: kASSubroutineEvent
-                                          targetDescriptor: NSAppleEventDescriptor.nullDescriptor
-                                                  returnID: kAutoGenerateReturnID
-                                             transactionID: kAnyTransactionID];
+  event = [NSAppleEventDescriptor appleEventWithEventClass:kASAppleScriptSuite
+                                                   eventID:kASSubroutineEvent
+                                          targetDescriptor:NSAppleEventDescriptor.nullDescriptor
+                                                  returnID:kAutoGenerateReturnID
+                                             transactionID:kAnyTransactionID];
   if (params != nil) {
-    [event setDescriptor: params forKeyword: keyDirectObject];
+    [event setDescriptor:params forKeyword:keyDirectObject];
   }
-  [event setDescriptor: [NSAppleEventDescriptor descriptorWithString:functionName]
-            forKeyword: keyASSubroutineName];
+  [event setDescriptor:[NSAppleEventDescriptor descriptorWithString:functionName]
+            forKeyword:keyASSubroutineName];
   
   NSAppleScript *script = GetCompiledScript();
   NSDictionary *errorDict;
   NSAppleEventDescriptor *result = [script executeAppleEvent:event error:&errorDict];
-  // TODO error checking on error dict
-  return result;
+  // return nil if there was an error
+  return (errorDict == nil) ? result : nil;
+}
+
+EXCEL_RC CheckReturn(NSAppleEventDescriptor* result) {
+  if (result == nil) {
+    return EXCEL_API_ERROR;
+  } else if (result.descriptorType == 'long' && result.int32Value == -1) {
+    return EXCEL_VBA_ERROR;
+  }
+  return SUCCESS;
+}
+
+bool CheckListDescriptor(NSAppleEventDescriptor* result, int expectedNumItems) {
+  return result.descriptorType == 'list' && result.numberOfItems == expectedNumItems;
 }
 
 NSAppleEventDescriptor* GetVectorEntry(NSAppleEventDescriptor* vector, NSInteger i) {
@@ -54,90 +70,175 @@ NSAppleEventDescriptor* GetMatrixEntry(NSAppleEventDescriptor* matrix, NSInteger
   return GetVectorEntry(GetVectorEntry(matrix, i), j);
 }
 
-double ConvertNSDataToDouble(NSData* data) {
-  double d;
-  assert([data length] == sizeof(d));
-  memcpy(&d, [data bytes], sizeof(d));
-  return d;
-}
-
-double ConvertDescriptorToDouble(NSAppleEventDescriptor* result) {
-  //TODO check type of descriptor
-  return ConvertNSDataToDouble([result data]);
-}
-
-int ConvertDescriptorToInt(NSAppleEventDescriptor* result) {
-  //TODO check type of descriptor
-  return [result int32Value];
-}
-
-std::string ConvertDescriptorToString(NSAppleEventDescriptor* result) {
-  // TODO error checking
-  assert([result numberOfItems] == 2);
-  // TODO type check
-  NSString *stringValue = [GetVectorEntry(result, 1) stringValue];
-  int stringLength = ConvertDescriptorToInt(GetVectorEntry(result, 2));
-
-  if (stringValue.length != stringLength) {
-    // Path returned didn't have the correct length
-    // TODO throw exception
-    stringValue = @"";
+EXCEL_RC ConvertDescriptorToDouble(NSAppleEventDescriptor* result, double* outdoub) {
+  if (result.descriptorType == 'doub' && result.data.length == sizeof(double)) {
+    memcpy(outdoub, result.data.bytes, sizeof(double));
+    return SUCCESS;
+  } else {
+    return EXCEL_INVALID_RETURN;
   }
-  return std::string([stringValue UTF8String]);
+}
+
+EXCEL_RC ConvertDescriptorToInt(NSAppleEventDescriptor* result, int* outint) {
+  if (result.descriptorType == 'long') {
+    *outint = result.int32Value;
+    return SUCCESS;
+  } else {
+    return EXCEL_INVALID_RETURN;
+  }
+}
+
+bool ConvertDescriptorToBool(NSAppleEventDescriptor* result) {
+  return result.int32Value;
+}
+
+bool CheckBoolDescriptor(NSAppleEventDescriptor* result) {
+  return result.descriptorType == 'fals' || result.descriptorType == 'true';
+}
+
+EXCEL_RC ConvertDescriptorToString(NSAppleEventDescriptor* result, std::string* outstr) {
+  NSAppleEventDescriptor* stringDesc = GetVectorEntry(result, 1);
+  if (stringDesc.descriptorType != 'utxt') {
+    return EXCEL_INVALID_RETURN;
+  }
+
+  *outstr = stringDesc.stringValue.UTF8String;
+
+  int stringLength;
+  EXCEL_RC rc = ConvertDescriptorToInt(GetVectorEntry(result, 2), &stringLength);
+  if (rc != SUCCESS) {
+    return rc;
+  }
+
+  if ((*outstr).length() != stringLength) {
+    return EXCEL_INVALID_RETURN;
+  }
+
+  return SUCCESS;
 }
 
 extern "C" {
 
-void GetLogFilePath(std::string* logPath) {
+EXCEL_RC CheckForEscapeKeypress(bool /* fullCheck */) {
+  @autoreleasepool {
+    NSAppleEventDescriptor *result = RunScriptFunction(@"getConfirmedAbort", nil);
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      if (CheckBoolDescriptor(result)) {
+        if (ConvertDescriptorToBool(result)) {
+          rc = ESC_ABORT;
+        }
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+    return AddLocationIfError(rc, CHECK_ESC_PRESS_NUM);
+  }
+}
+
+EXCEL_RC GetLogFilePath(std::string* logPath) {
   @autoreleasepool {
     NSAppleEventDescriptor *result = RunScriptFunction(@"getLogFilePath", nil);
-    *logPath = ConvertDescriptorToString(GetVectorEntry(result, 1));
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      result = GetVectorEntry(result, 1);
+      if (CheckListDescriptor(result, 2)) {
+        rc = ConvertDescriptorToString(result, logPath);
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+    return AddLocationIfError(rc, GET_LOG_FILE_PATH_NUM);
   }
 }
 
-void GetNumConstraints(int* numCons, int* numObjs) {
+EXCEL_RC GetNumConstraints(int* numCons, int* numObjs) {
   @autoreleasepool {
     NSAppleEventDescriptor* result = RunScriptFunction(@"getNumConstraints", nil);
-    *numCons = ConvertDescriptorToInt(GetVectorEntry(result, 1));
-    *numObjs = ConvertDescriptorToInt(GetVectorEntry(result, 2));
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      result = GetVectorEntry(result, 1);
+      if (CheckListDescriptor(result, 2)) {
+        rc = ConvertDescriptorToInt(GetVectorEntry(result, 1), numCons);
+        if (rc != SUCCESS) goto ExitFunction;
+
+        rc = ConvertDescriptorToInt(GetVectorEntry(result, 2), numObjs);
+        if (rc != SUCCESS) goto ExitFunction;
+
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+
+ExitFunction:
+    return AddLocationIfError(rc, GET_NUM_CONSTRAINTS_NUM);
   }
 }
 
-void GetNumVariables(int* numVars) {
+EXCEL_RC GetNumVariables(int* numVars) {
   @autoreleasepool {
     NSAppleEventDescriptor* result = RunScriptFunction(@"getNumVariables", nil);
-    // TODO typecheck
-    *numVars = [result int32Value];
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      rc = ConvertDescriptorToInt(result, numVars);
+    }
+    return AddLocationIfError(rc, GET_NUM_VARIABLES_NUM);
   }
 }
 
-void GetVariableData(int numVars, double* lowerBounds, double* upperBounds, double* startingX,
-                                int* varTypes) {
+EXCEL_RC GetVariableData(int numVars, double* lowerBounds, double* upperBounds, double* startingX,
+                         int* varTypes) {
   @autoreleasepool {
     NSAppleEventDescriptor* result = RunScriptFunction(@"getVariableData", nil);
-    // TODO error handle
-    assert([result numberOfItems] == 4 * numVars);
-    for (int i = 0; i < numVars; ++i) {
-      lowerBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 0 * numVars + i + 1));
-      upperBounds[i] = ConvertDescriptorToDouble(GetVectorEntry(result, 1 * numVars + i + 1));
-      startingX[i]   = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1));
-      varTypes[i]    = ConvertDescriptorToInt   (GetVectorEntry(result, 3 * numVars + i + 1));
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      if (CheckListDescriptor(result, 4 * numVars)) {
+        for (int i = 0; i < numVars; ++i) {
+          rc = ConvertDescriptorToDouble(GetVectorEntry(result, 0 * numVars + i + 1),
+                                         lowerBounds + i);
+          if (rc != SUCCESS) break;
+
+          rc = ConvertDescriptorToDouble(GetVectorEntry(result, 1 * numVars + i + 1),
+                                         upperBounds + i);
+          if (rc != SUCCESS) break;
+
+          rc = ConvertDescriptorToDouble(GetVectorEntry(result, 2 * numVars + i + 1),
+                                         startingX + i);
+          if (rc != SUCCESS) break;
+
+          rc = ConvertDescriptorToInt(GetVectorEntry(result, 3 * numVars + i + 1),
+                                      varTypes + i);
+          if (rc != SUCCESS) break;
+        }
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
     }
+    return AddLocationIfError(rc, GET_VARIABLE_DATA_NUM);
   }
 }
 
-void GetOptionData(std::string** paramStrings, int* numOptions) {
+EXCEL_RC GetOptionData(std::string** paramStrings, int* numOptions) {
   @autoreleasepool {
     NSAppleEventDescriptor* result = RunScriptFunction(@"getOptionData", nil);
-    *numOptions = (int)[result numberOfItems];
-    *paramStrings = new std::string[*numOptions];
-    for (int i = 0; i < *numOptions; ++i) {
-      (*paramStrings)[i] = ConvertDescriptorToString(GetVectorEntry(result, i + 1));
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      if (result.descriptorType == 'list') {
+        *numOptions = (int)result.numberOfItems;
+        *paramStrings = new std::string[*numOptions];
+        for (int i = 0; i < *numOptions; ++i) {
+          rc = ConvertDescriptorToString(GetVectorEntry(result, i + 1), *paramStrings + i);
+          if (rc != SUCCESS) break;
+        }
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
     }
+    return AddLocationIfError(rc, GET_OPTION_DATA_NUM);
   }
 }
 
-void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+EXCEL_RC UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
   @autoreleasepool {
 
@@ -168,41 +269,57 @@ void UpdateVars(double* newVars, int numVars, const double* bestSolution,
     [params insertDescriptor:[NSAppleEventDescriptor descriptorWithBoolean:!feasibility]
                      atIndex:3];
   
-    RunScriptFunction(@"updateVars", params);
-  }
-}
-
-void RecalculateValues() {
-  @autoreleasepool {
-    RunScriptFunction(@"recalculateValues", nil);
-  }
-}
-
-void GetConstraintValues(int numCons, double* newCons) {
-  @autoreleasepool {
-    NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
-
-    if ([result numberOfItems] == numCons) {
-      for (int i = 0; i < numCons; ++i) {
-        newCons[i] = ConvertDescriptorToDouble(GetMatrixEntry(result, i + 1, 1));
-      }
-    } else {
-      // There aren't the full number of constraints
-      // Set all results to NaN
-      for (int i = 0; i < numCons; ++i) {
-        newCons[i] = std::numeric_limits<double>::quiet_NaN();
+    NSAppleEventDescriptor* result = RunScriptFunction(@"updateVars", params);
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      int retval;
+      rc = ConvertDescriptorToInt(result, &retval);
+      if (rc != SUCCESS || retval != 0) {
+        rc = EXCEL_INVALID_RETURN;
       }
     }
+    return AddLocationIfError(rc, UPDATE_VARS_NUM);
   }
-
 }
 
-void EvaluateX(double* newVars, int numVars, int numCons, const double* bestSolution,
-                          bool feasibility, double* newCons) {
-  // TODO see if we can detect an escape keypress?
-  UpdateVars(newVars, numVars, bestSolution, feasibility);
-  RecalculateValues();
-  GetConstraintValues(numCons, newCons);
+EXCEL_RC RecalculateValues() {
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"recalculateValues", nil);
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      int retval;
+      rc = ConvertDescriptorToInt(result, &retval);
+      if (rc != SUCCESS || retval != 0) {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+    return AddLocationIfError(rc, RECALCULATE_VALUES_NUM);
+  }
+}
+
+EXCEL_RC GetConstraintValues(int numCons, double* newCons) {
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getConstraintValues", nil);
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      if (CheckListDescriptor(result, numCons)) {
+        // Copy in result values
+        for (int i = 0; i < numCons; ++i) {
+          rc = ConvertDescriptorToDouble(GetMatrixEntry(result, i + 1, 1), newCons + i);
+          if (rc != SUCCESS) break;
+        }
+      } else if (result.descriptorType == 'list') {
+        // There aren't the full number of constraints, indicating some of the numbers are errors.
+        // Set all result values to NaN in response.
+        for (int i = 0; i < numCons; ++i) {
+          newCons[i] = std::numeric_limits<double>::quiet_NaN();
+        }
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+    return AddLocationIfError(rc, GET_CONSTRAINT_VALUES_NUM);
+  }
 }
 
 void LoadResult(int retVal) {
@@ -214,3 +331,5 @@ void LoadResult(int retVal) {
 }
 
 }  // extern "C"
+
+}  // namespace OPENSOLVER

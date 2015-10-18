@@ -1,7 +1,7 @@
 // ExcelCallbacks.win32.cpp
-// Implementation of ExcelCallbacks.h for Windows
+// Implementation of ExcelCallbacks.hpp for Windows
 
-#include "ExcelCallbacks.h"
+#include "ExcelCallbacks.hpp"
 
 #include <atlbase.h>
 #include <stdio.h>
@@ -29,9 +29,25 @@ void ConvertToXcharIfNeeded(XCHAR* destination, const char* source) {
   }
 }
 
-// Check the return code from an Excel12 call for errors
+// Check the return code from an Excel12 call for errors in the Excel API.
 bool CheckReturnCodeOkay(int ret) {
-  return ret != xlretAbort && ret != xlretUncalced;
+  return ret == xlretSuccess;
+}
+
+// Check the return variant from an Excel12 call for errors in the VBA.
+// A returned integer with value -1 indicates an error inside the VBA.
+bool CheckReturnVariantOkay(const XLOPER12& result) {
+  return !(result.xltype == xltypeNum && result.val.num == -1);
+}
+
+EXCEL_RC CheckReturn(int ret, const XLOPER12& result) {
+  if (!CheckReturnCodeOkay(ret)) {
+    return EXCEL_API_ERROR;
+  } else if (!CheckReturnVariantOkay(result)) {
+    return EXCEL_VBA_ERROR;
+  } else {
+    return SUCCESS;
+  }
 }
 
 // Checks that the variant returned from Excel is an array of the given size
@@ -48,180 +64,216 @@ std::string XcharToString(const XCHAR* s) {
 
 // Converts a string returned from Excel to std::string
 // All strings need to be passed as a variant array with string then its length
-std::string GetStringFromExcel(const XLOPER12* stringData) {
+EXCEL_RC GetStringFromExcel(const XLOPER12* stringData, std::string* outstr) {
   // Get the length of the string
   if (stringData[1].xltype != xltypeNum) {
-    throw std::exception("String length supplied by Excel not integer");
+    return EXCEL_INVALID_RETURN;
   }
   int n = static_cast<int>(stringData[1].val.num);
 
   if (stringData[0].xltype != xltypeStr) {
-    throw std::exception("String data supplied was not a string type");
+    return EXCEL_INVALID_RETURN;
   }
   // Excel puts garbage in the first char
-  return XcharToString(stringData[0].val.str).substr(1, n);
+  *outstr = XcharToString(stringData[0].val.str).substr(1, n);
+  return SUCCESS;
 }
 
-// Creates a FailedCallException using the provided XCHAR message
-FailedCallException MakeFailedCallException(const XCHAR* message) {
-  return FailedCallException(XcharToString(message));
-}
-
-// Checks for an escape keypress in Excel and reacts appropriately
-void CheckForEscapeKeypress() {
-  // Reference link:
-  // http://msdn.microsoft.com/en-us/library/office/bb687825%28v=office.15%29.aspx
+EXCEL_RC ShowCancelDialog() {
   static XCHAR ShowCancelDialogName[WCHARBUF];
   ConvertToXcharIfNeeded(ShowCancelDialogName, SHOW_CANCEL_DIALOG_NAME);
+  static XLOPER12 xOpResult;
 
-  static XLOPER12 xOpAbort;
-  Excel12f(xlAbort, &xOpAbort, 0);
-  BOOL escapePressed = xOpAbort.val.xbool;
-  Excel12f(xlFree, nullptr, 1, &xOpAbort);
-
-  if (escapePressed) {
-    static XLOPER12 xOpConfirm;
-    bool successful = false;
-    BOOL abort = false;
-    int ret = Excel12f(xlUDF, &xOpConfirm, 1, TempStr12(ShowCancelDialogName));
-    if (CheckReturnCodeOkay(ret) && xOpConfirm.xltype == xltypeBool) {
-      successful = true;
-      abort = xOpConfirm.val.xbool;
+  // Show confirm escape dialog
+  int ret = Excel12f(xlUDF, &xOpResult, 1, TempStr12(ShowCancelDialogName));
+  EXCEL_RC rc = CheckReturn(ret, xOpResult);
+  if (rc == SUCCESS) {
+    if (xOpResult.xltype != xltypeNum || xOpResult.val.num != 0) {
+      rc = EXCEL_INVALID_RETURN;
     }
-    Excel12f(xlFree, nullptr, 1, &xOpConfirm);
-
-    if (!successful) {
-      throw MakeFailedCallException(ShowCancelDialogName);
-    }
-
-    if (abort) {
-      throw std::exception("Aborting through user action");
-    }
-
-    // Clear the escape key press so we can resume
-    Excel12f(xlAbort, nullptr, 1, TempBool12(false));
   }
+
+  // Free memory
+  Excel12f(xlFree, nullptr, 1, &xOpResult);
+
+  return AddLocationIfError(rc, SHOW_CANCEL_DIALOG_NUM);
 }
 
 // Interface implementations
 
-void GetLogFilePath(std::string* logPath) {
+EXCEL_RC CheckForEscapeKeypress(bool fullCheck) {
+  // On a full check, we need to check whether Excel has a pending esc press.
+  if (fullCheck) {
+    // Reference link:
+    // http://msdn.microsoft.com/en-us/library/office/bb687825%28v=office.15%29.aspx
+    static XLOPER12 xOpAbort;
+    Excel12f(xlAbort, &xOpAbort, 0);
+    BOOL escapePressed = xOpAbort.val.xbool;
+    Excel12f(xlFree, nullptr, 1, &xOpAbort);
+
+    if (escapePressed) {
+      // Show dialog to confirm escape keypress
+      EXCEL_RC showDialogRc = ShowCancelDialog();
+      if (showDialogRc != SUCCESS) {
+        return showDialogRc;
+      }
+      // Clear the escape key press so we can resume
+      Excel12f(xlAbort, nullptr, 1, TempBool12(false));
+    }
+  }
+
+  // Now check if with Excel if an abort has been requested
+  static XCHAR GetConfirmedAbort[WCHARBUF];
+  ConvertToXcharIfNeeded(GetConfirmedAbort, GET_CONFIRMED_ABORT_NAME);
+
+  static XLOPER12 xOpConfirm;
+  int ret = Excel12f(xlUDF, &xOpConfirm, 1, TempStr12(GetConfirmedAbort));
+
+  EXCEL_RC rc = CheckReturn(ret, xOpConfirm);
+  if (rc == SUCCESS) {
+    if (xOpConfirm.xltype == xltypeBool) {
+      if (xOpConfirm.val.xbool) {
+        rc = ESC_ABORT;
+      }
+    } else {
+      rc = EXCEL_INVALID_RETURN;
+    }
+  }
+
+  // Free Excel-allocated memory
+  Excel12f(xlFree, nullptr, 1, &xOpConfirm);
+
+  return AddLocationIfError(rc, CHECK_ESC_PRESS_NUM);
+}
+
+EXCEL_RC GetLogFilePath(std::string* logPath) {
   static XCHAR GetLogFilePathName[WCHARBUF];
   ConvertToXcharIfNeeded(GetLogFilePathName, GET_LOG_FILE_PATH_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetLogFilePathName));
-  if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, 2)) {
-    successful = true;
-    *logPath = GetStringFromExcel(xResult.val.array.lparray);
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (CheckIsArray(xResult, 2)) {
+      rc = GetStringFromExcel(xResult.val.array.lparray, logPath);
+    } else {
+      rc = EXCEL_INVALID_RETURN;
+    }
   }
 
   // Free up Excel-allocated array
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetLogFilePathName);
-  }
+  return AddLocationIfError(rc, GET_LOG_FILE_PATH_NUM);
 }
 
-void GetNumConstraints(int* numCons, int* numObjs) {
+EXCEL_RC GetNumConstraints(int* numCons, int* numObjs) {
   static XCHAR GetNumConstraintsName[WCHARBUF];
   ConvertToXcharIfNeeded(GetNumConstraintsName, GET_NUM_CONSTRAINTS_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetNumConstraintsName));
-  if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, 2)) {
-    successful = true;
-    *numCons = static_cast<int>(xResult.val.array.lparray[0].val.num);
-    *numObjs = static_cast<int>(xResult.val.array.lparray[1].val.num);
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (CheckIsArray(xResult, 2)) {
+      *numCons = static_cast<int>(xResult.val.array.lparray[0].val.num);
+      *numObjs = static_cast<int>(xResult.val.array.lparray[1].val.num);
+    } else {
+      rc = EXCEL_INVALID_RETURN;
+    }
   }
 
   // Free up Excel-allocated array
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetNumConstraintsName);
-  }
+  return AddLocationIfError(rc, GET_NUM_CONSTRAINTS_NUM);
 }
 
-void GetNumVariables(int* numVars) {
+EXCEL_RC GetNumVariables(int* numVars) {
   static XCHAR GetNumVariablesName[WCHARBUF];
   ConvertToXcharIfNeeded(GetNumVariablesName, GET_NUM_VARIABLES_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetNumVariablesName));
-  if (CheckReturnCodeOkay(ret) && xResult.xltype == xltypeNum) {
-    successful = true;
-    *numVars = static_cast<int>(xResult.val.num);
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (xResult.xltype == xltypeNum) {
+      *numVars = static_cast<int>(xResult.val.num);
+    } else {
+      rc = EXCEL_INVALID_RETURN;
+    }
   }
 
   // Free up Excel-allocated array
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetNumVariablesName);
-  }
+  return AddLocationIfError(rc, GET_NUM_VARIABLES_NUM);
 }
 
-void GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
+EXCEL_RC GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
                      double* startingX, int* varTypes) {
   static XCHAR GetVariableDataName[WCHARBUF];
   ConvertToXcharIfNeeded(GetVariableDataName, GET_VARIABLE_DATA_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetVariableDataName));
-  if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, 4 * numVars)) {
-    successful = true;
 
-    for (int i = 0; i < numVars; i++) {
-      lowerBounds[i] = xResult.val.array.lparray[0 * numVars + i].val.num;
-      upperBounds[i] = xResult.val.array.lparray[1 * numVars + i].val.num;
-      startingX[i] =   xResult.val.array.lparray[2 * numVars + i].val.num;
-      double rawType = xResult.val.array.lparray[3 * numVars + i].val.num;
-      varTypes[i] = static_cast<int>(rawType);
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (CheckIsArray(xResult, 4 * numVars)) {
+      for (int i = 0; i < numVars; i++) {
+        lowerBounds[i] = xResult.val.array.lparray[0 * numVars + i].val.num;
+        upperBounds[i] = xResult.val.array.lparray[1 * numVars + i].val.num;
+        startingX[i] =   xResult.val.array.lparray[2 * numVars + i].val.num;
+        double rawType = xResult.val.array.lparray[3 * numVars + i].val.num;
+        varTypes[i] = static_cast<int>(rawType);
+      }
+    } else {
+      rc = EXCEL_INVALID_RETURN;
     }
   }
 
   // Free Excel-allocated memory
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetVariableDataName);
-  }
+  return AddLocationIfError(rc, GET_VARIABLE_DATA_NUM);
 }
 
-void GetOptionData(std::string** paramStrings, int* numOptions) {
+EXCEL_RC GetOptionData(std::string** paramStrings, int* numOptions) {
   static XCHAR GetOptionDataName[WCHARBUF];
   ConvertToXcharIfNeeded(GetOptionDataName, GET_OPTION_DATA_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetOptionDataName));
-  if (CheckReturnCodeOkay(ret) && xResult.xltype == xltypeMulti) {
-    successful = true;
 
-    *numOptions = xResult.val.array.rows;
-    *paramStrings = new std::string[*numOptions];
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (xResult.xltype == xltypeMulti) {
+      *numOptions = xResult.val.array.rows;
+      *paramStrings = new std::string[*numOptions];
 
-    for (int i = 0; i < *numOptions; ++i) {
-      XLOPER12* stringData = xResult.val.array.lparray + 2 * i;
-      (*paramStrings)[i] = GetStringFromExcel(stringData);
+      for (int i = 0; i < *numOptions; ++i) {
+        XLOPER12* stringData = xResult.val.array.lparray + 2 * i;
+        rc = GetStringFromExcel(stringData, *paramStrings + i);
+        if (rc != SUCCESS) {
+          break;
+        }
+      }
+    } else {
+      rc = EXCEL_INVALID_RETURN;
     }
   }
 
   // Free Excel-allocated memory
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetOptionDataName);
-  }
+  return AddLocationIfError(rc, GET_OPTION_DATA_NUM);
 }
 
-void UpdateVars(double* newVars, int numVars, const double* bestSolution,
+EXCEL_RC UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
   // Set up the variant array of new variable values.
   XLOPER12 *xOpArray = new XLOPER12[numVars];
@@ -251,64 +303,72 @@ void UpdateVars(double* newVars, int numVars, const double* bestSolution,
   static XCHAR UpdateVarName[WCHARBUF];
   ConvertToXcharIfNeeded(UpdateVarName, UPDATE_VAR_NAME);
 
-  bool successful = false;
-  int ret = Excel12f(xlUDF, nullptr, 4, TempStr12(UpdateVarName),
+  static XLOPER12 xResult;
+  int ret = Excel12f(xlUDF, &xResult, 4, TempStr12(UpdateVarName),
                       &xOpMulti, &xOpSol, TempBool12(!feasibility));
-  if (CheckReturnCodeOkay(ret)) {
-    successful = true;
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (xResult.xltype != xltypeNum || xResult.val.num != 0) {
+      rc = EXCEL_INVALID_RETURN;
+    }
   }
-  delete[] xOpArray;
 
-  if (!successful) {
-    throw MakeFailedCallException(UpdateVarName);
-  }
+  delete[] xOpArray;
+  // Free Excel-allocated memory
+  Excel12f(xlFree, nullptr, 1, &xResult);
+
+  return AddLocationIfError(rc, UPDATE_VARS_NUM);
 }
 
-void RecalculateValues() {
+EXCEL_RC RecalculateValues() {
   static XCHAR RecalculateValuesName[WCHARBUF];
   ConvertToXcharIfNeeded(RecalculateValuesName, RECALCULATE_VALUES_NAME);
 
-  int ret = Excel12f(xlUDF, nullptr, 1, TempStr12(RecalculateValuesName));
-  if (!CheckReturnCodeOkay(ret)) {
-    throw MakeFailedCallException(RecalculateValuesName);
+  static XLOPER12 xResult;
+  int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(RecalculateValuesName));
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (xResult.xltype != xltypeNum || xResult.val.num != 0) {
+      rc = EXCEL_INVALID_RETURN;
+    }
   }
+
+  // Free Excel-allocated memory
+  Excel12f(xlFree, nullptr, 1, &xResult);
+
+  return AddLocationIfError(rc, RECALCULATE_VALUES_NUM);
 }
 
-void GetConstraintValues(int numCons, double* newCons) {
+EXCEL_RC GetConstraintValues(int numCons, double* newCons) {
   static XCHAR GetValuesName[WCHARBUF];
   ConvertToXcharIfNeeded(GetValuesName, GET_VALUES_NAME);
 
   static XLOPER12 xResult;
-  bool successful = false;
   int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetValuesName));
-  if (CheckReturnCodeOkay(ret) && CheckIsArray(xResult, numCons)) {
-    successful = true;
-    for (int i = 0; i < numCons; i++) {
-      // Check for error passed back from VBA and set to C++ NaN.
-      // We need to catch errors separately as they are otherwise interpreted
-      // as having value zero.
-      if (xResult.val.array.lparray[i].xltype != xltypeNum) {
-        newCons[i] = std::numeric_limits<double>::quiet_NaN();
-      } else {
-        newCons[i] = xResult.val.array.lparray[i].val.num;
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (CheckIsArray(xResult, numCons)) {
+      for (int i = 0; i < numCons; i++) {
+        // Check for error passed back from VBA and set to C++ NaN.
+        // We need to catch errors separately as they are otherwise interpreted
+        // as having value zero.
+        if (xResult.val.array.lparray[i].xltype != xltypeNum) {
+          newCons[i] = std::numeric_limits<double>::quiet_NaN();
+        } else {
+          newCons[i] = xResult.val.array.lparray[i].val.num;
+        }
       }
+    } else {
+      rc = EXCEL_INVALID_RETURN;
     }
   }
 
   // Free memory allocated by Excel
   Excel12f(xlFree, nullptr, 1, &xResult);
 
-  if (!successful) {
-    throw MakeFailedCallException(GetValuesName);
-  }
-}
-
-void EvaluateX(double* newVars, int numVars, int numCons,
-               const double* bestSolution, bool feasibility, double *newCons) {
-  CheckForEscapeKeypress();
-  UpdateVars(newVars, numVars, bestSolution, feasibility);
-  RecalculateValues();
-  GetConstraintValues(numCons, newCons);
+  return AddLocationIfError(rc, GET_CONSTRAINT_VALUES_NUM);
 }
 
 }  // namespace OPENSOLVER

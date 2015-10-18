@@ -1,11 +1,12 @@
 // NomadInterface.cpp
 
-#include "NomadInterface.h"
-#include "ExcelCallbacks.h"
+#include "NomadInterface.hpp"
 
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "ExcelCallbacks.hpp"
 
 namespace OPENSOLVER {
 
@@ -55,7 +56,7 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
                              const NOMAD::Double& /*h_max*/,
                              bool& count_eval) const {
   for (int i = 0; i < _n; ++i) {
-      _px[i] = x[i].value();
+    _px[i] = x[i].value();
   }
 
   // Get current solution for status updating
@@ -82,14 +83,19 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
     bestSol = &bestValue;
   }
 
-  try {
-    EvaluateX(_px, _n, _m, bestSol, feasibility, _fx);
-  } catch (exception&) {
-     mads->force_quit(0);
-     return false;
+  EXCEL_RC rc = EvaluateX(_px, _n, _m, bestSol, feasibility, _fx);
+  if (rc != SUCCESS) {
+    if (GetErrorCode(rc) == ESC_ABORT) {
+      // Rather than just throw an escape exception, we want to simulate ctrl-c
+      mads->force_quit(0);
+      return false;
+    } else {
+      // Guaranteed to throw since rc != SUCCESS
+      ValidateReturnCode(rc);
+    }
   }
   for (int i = 0; i < _m; ++i) {
-      x.set_bb_output(i, _fx[i]);
+    x.set_bb_output(i, _fx[i]);
   }
   count_eval = true;
   return true;
@@ -97,10 +103,9 @@ bool Excel_Evaluator::eval_x(NOMAD::Eval_Point& x,
 
 NomadResult RunNomad() {
   std::string logFilePath;
-  try {
-    // Get a temp path to write parameters etc to
-    GetLogFilePath(&logFilePath);
-  } catch (exception&) {
+
+  // Get a temp path to write parameters etc to
+  if (GetLogFilePath(&logFilePath) != SUCCESS) {
     return LOG_FILE_ERROR;
   }
 
@@ -113,7 +118,7 @@ NomadResult RunNomad() {
 
     // Variable information
     int numVars;
-    GetNumVariables(&numVars);
+    ValidateReturnCode(GetNumVariables(&numVars));
 
     if (numVars < 1) {
       throw std::runtime_error("No variables returned");
@@ -124,8 +129,8 @@ NomadResult RunNomad() {
     double * const startingPoint = new double[numVars];
     int * const varTypes =         new int[numVars];
 
-    GetVariableData(numVars, lowerBounds, upperBounds, startingPoint,
-                    varTypes);
+    ValidateReturnCode(GetVariableData(numVars, lowerBounds, upperBounds,
+                                       startingPoint, varTypes));
     for (int i = 0; i < numVars; ++i) {
       if (upperBounds[i] >= 1e10) {
         upperBounds[i] = NOMAD::INF;
@@ -151,7 +156,7 @@ NomadResult RunNomad() {
     // Constraint/Objective info
     int numCons;
     int numObjs;
-    GetNumConstraints(&numCons, &numObjs);
+    ValidateReturnCode(GetNumConstraints(&numCons, &numObjs));
 
     vector<NOMAD::bb_output_type> bbot(numCons);
     for (int i = 0; i < numObjs; i++) {
@@ -164,7 +169,7 @@ NomadResult RunNomad() {
     // User options
     string *paramStrings;
     int numStrings;
-    GetOptionData(&paramStrings, &numStrings);
+    ValidateReturnCode(GetOptionData(&paramStrings, &numStrings));
 
     NOMAD::Parameter_Entries entries;
     NOMAD::Parameter_Entry *pe;
@@ -232,21 +237,13 @@ NomadResult RunNomad() {
     // Get return value
     NomadResult retval = OPTIMAL;
     if (mads->get_stats().get_real_time() == p.get_max_time()) {
-      retval = SOLVE_STOPPED_TIME;
+      retval = feasibility ? SOLVE_STOPPED_TIME : SOLVE_STOPPED_TIME_INF;
     } else if (mads->get_stats().get_bb_eval() == p.get_max_bb_eval()) {
-      retval = SOLVE_STOPPED_ITER;
+      retval = feasibility ? SOLVE_STOPPED_ITER : SOLVE_STOPPED_ITER_INF;
     } else if (stopflag == NOMAD::CTRL_C) {
       retval = USER_CANCELLED;
-    }
-
-    if (!feasibility) {
-      if (retval == SOLVE_STOPPED_ITER) {
-        retval = SOLVE_STOPPED_ITER_INF;
-      } else if (retval == SOLVE_STOPPED_TIME) {
-        retval = SOLVE_STOPPED_TIME_INF;
-      } else {
-        retval = INFEASIBLE;
-      }
+    } else if (!feasibility) {
+      retval = INFEASIBLE;
     }
 
     // Free Memory
