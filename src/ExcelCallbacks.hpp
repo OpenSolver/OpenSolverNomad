@@ -17,6 +17,7 @@ const char GET_NUM_CONSTRAINTS_NAME[] = "OpenSolver.NOMAD_GetNumConstraints";
 const char GET_NUM_VARIABLES_NAME[] =   "OpenSolver.NOMAD_GetNumVariables";
 const char GET_VARIABLE_DATA_NAME[] =   "OpenSolver.NOMAD_GetVariableData";
 const char GET_OPTION_DATA_NAME[] =     "OpenSolver.NOMAD_GetOptionData";
+const char GET_USE_WARMSTART_NAME[] =   "OpenSolver.NOMAD_GetUseWarmstart";
 const char SHOW_CANCEL_DIALOG_NAME[] =  "OpenSolver.NOMAD_ShowCancelDialog";
 const char GET_CONFIRMED_ABORT_NAME[] = "OpenSolver.NOMAD_GetConfirmedAbort";
 const char UPDATE_VAR_NAME[] =          "OpenSolver.NOMAD_UpdateVar";
@@ -45,6 +46,7 @@ enum {
   UPDATE_VARS_NUM = 8,
   RECALCULATE_VALUES_NUM = 9,
   GET_CONSTRAINT_VALUES_NUM = 10,
+  GET_USE_WARMSTART = 11,
 };
 
 // Define type for Excel return code
@@ -133,6 +135,14 @@ EXCEL_RC GetVariableData(int numVars, double* lowerBounds, double* upperBounds,
  * @return The return code of the callback
  */
 EXCEL_RC GetOptionData(std::string **paramStrings, int* numOptions);
+
+/**
+ * Gets boolean indicating whether to use warmstart from Excel.
+ *
+ * @param useWarmstart Set if warmstart should be used
+ * @return The return code of the callback
+ */
+EXCEL_RC GetUseWarmstart(bool* useWarmstart);
 
 /**
  * Sets new values of variables in Excel

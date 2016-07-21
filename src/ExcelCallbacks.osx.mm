@@ -242,6 +242,21 @@ EXCEL_RC GetOptionData(std::string** paramStrings, int* numOptions) {
   }
 }
 
+EXCEL_RC GetUseWarmstart(bool* useWarmstart) {
+  @autoreleasepool {
+    NSAppleEventDescriptor* result = RunScriptFunction(@"getUseWarmstart", nil);
+    EXCEL_RC rc = CheckReturn(result);
+    if (rc == SUCCESS) {
+      if (CheckBoolDescriptor(result)) {
+        *useWarmstart = ConvertDescriptorToBool(result);
+      } else {
+        rc = EXCEL_INVALID_RETURN;
+      }
+    }
+    return AddLocationIfError(rc, GET_USE_WARMSTART);
+  }
+}
+
 EXCEL_RC UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
   @autoreleasepool {

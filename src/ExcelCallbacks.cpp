@@ -75,6 +75,9 @@ std::string GetExcelCallbackErrorMessage(EXCEL_RC rc) {
     case GET_CONSTRAINT_VALUES_NUM:
       messageLocation = "GetConstraintValues";
       break;
+    case GET_USE_WARMSTART:
+      messageLocation = "GetUseWarmstart";
+      break;
     default:
       messageLocation = "unknown";
       break;

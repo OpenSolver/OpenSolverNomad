@@ -1,7 +1,7 @@
 on getLogFilePath()
-	tell application id "com.microsoft.Excel"
-		return (run VB macro "OpenSolver.NOMAD_GetLogFilePath")
-	end tell
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_GetLogFilePath")
+  end tell
 end getLogFilePath
 
 on getNumConstraints()
@@ -23,15 +23,21 @@ on getVariableData()
 end getVariableData
 
 on getOptionData()
-	tell application id "com.microsoft.Excel"
-		return (run VB macro "OpenSolver.NOMAD_GetOptionData")
-	end tell
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_GetOptionData")
+  end tell
 end getOptionData
 
+on getUseWarmstart()
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_GetUseWarmStart")
+  end tell
+end getUseWarmstart
+
 on updateVars(newVars, bestSolution, feasibility)
-	tell application id "com.microsoft.Excel"
-		return (run VB macro "OpenSolver.NOMAD_UpdateVar" arg1 newVars arg2 bestSolution arg3 feasibility)
-	end tell
+  tell application id "com.microsoft.Excel"
+    return (run VB macro "OpenSolver.NOMAD_UpdateVar" arg1 newVars arg2 bestSolution arg3 feasibility)
+  end tell
 end updateVars
 
 on recalculateValues()

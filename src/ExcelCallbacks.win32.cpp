@@ -273,6 +273,28 @@ EXCEL_RC GetOptionData(std::string** paramStrings, int* numOptions) {
   return AddLocationIfError(rc, GET_OPTION_DATA_NUM);
 }
 
+EXCEL_RC GetUseWarmstart(bool* useWarmstart) {
+  static XCHAR GetUseWarmstartName[WCHARBUF];
+  ConvertToXcharIfNeeded(GetUseWarmstartName, GET_USE_WARMSTART_NAME);
+
+  static XLOPER12 xResult;
+  int ret = Excel12f(xlUDF, &xResult, 1, TempStr12(GetUseWarmstartName));
+
+  EXCEL_RC rc = CheckReturn(ret, xResult);
+  if (rc == SUCCESS) {
+    if (xResult.xltype == xltypeBool) {
+      *useWarmstart = (xResult.val.xbool != 0);
+    } else {
+      rc = EXCEL_INVALID_RETURN;
+    }
+  }
+
+  // Free Excel-allocated memory
+  Excel12f(xlFree, nullptr, 1, &xResult);
+
+  return AddLocationIfError(rc, GET_USE_WARMSTART);
+}
+
 EXCEL_RC UpdateVars(double* newVars, int numVars, const double* bestSolution,
                 bool feasibility) {
   // Set up the variant array of new variable values.

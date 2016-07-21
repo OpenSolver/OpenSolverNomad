@@ -193,6 +193,15 @@ NomadResult RunNomad() {
     }
     delete[] paramStrings;
 
+    // Only set the warmstart if we are supposed to
+    bool useWarmstart;
+    ValidateReturnCode(GetUseWarmstart(&useWarmstart));
+    if (!useWarmstart) {
+      for (int i = 0; i < numVars; ++i) {
+        x0[i] = (lb[i] + ub[i]) / 2;
+      }
+    }
+
     // Set all parameters
     NOMAD::Parameters p(out);
     p.set_DIMENSION(numVars);
