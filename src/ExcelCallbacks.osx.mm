@@ -74,6 +74,10 @@ EXCEL_RC ConvertDescriptorToDouble(NSAppleEventDescriptor* result, double* outdo
   if (result.descriptorType == 'doub' && result.data.length == sizeof(double)) {
     memcpy(outdoub, result.data.bytes, sizeof(double));
     return SUCCESS;
+  } else if (result.descriptorType == 'utxt' && [result.stringValue isEqual: @""]) {
+    // Blank entry from Excel - treat as a zero
+    *outdoub = 0;
+    return SUCCESS;
   } else {
     return EXCEL_INVALID_RETURN;
   }
